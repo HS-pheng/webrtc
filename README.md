@@ -1,4 +1,9 @@
 # webrtc-prototype
 
-## Start the application
-`docker compose up -d`
+Start application with `docker compose up -d`
+
+## ./client
+Nuxt 3 Frontend
+
+## ./server
+NestJS Backend
