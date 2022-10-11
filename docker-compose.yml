@@ -14,6 +14,7 @@ services:
       context: ./server
     ports:
       - '${API_PORT}:3000'
+      - 40000-40020:40000-40020/udp
     links:
       - db
       - redis
