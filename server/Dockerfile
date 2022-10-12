@@ -10,12 +10,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 
 RUN npm i -g yarn
 
-WORKDIR /app/server
+WORKDIR /app
 
 COPY ["package.json", "yarn.lock", "./"]
 
-RUN yarn
-
 COPY . .
 
-CMD ["yarn", "dev"]
+CMD yarn && yarn dev
