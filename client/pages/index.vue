@@ -2,6 +2,7 @@
   <div class="flex flex-col items-center w-[400px] mx-auto my-20 border-2">
     <h1>Socket connected: {{ ws.connected }}</h1>
     <h2>Socket ID: {{ id }}</h2>
+    <button @click.prevent="disconnectSocket">Disconnect</button>
   </div>
 </template>
 
@@ -28,4 +29,8 @@ watch(
 );
 
 const id = computed(() => ws.socket?.id || '-');
+
+const disconnectSocket: any = () => {
+  ws.disconnect();
+};
 </script>
