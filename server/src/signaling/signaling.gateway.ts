@@ -5,10 +5,10 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { SignalingService } from './signaling.service';
 import { Socket, Server } from 'socket.io';
-import { forwardRef, Inject } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
@@ -16,14 +16,13 @@ import { forwardRef, Inject } from '@nestjs/common';
   },
 })
 export class SignalingGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  constructor(
-    @Inject(forwardRef(() => SignalingService))
-    private readonly signalingService: SignalingService,
-  ) {}
+  constructor(private readonly signalingService: SignalingService) {}
 
-  @WebSocketServer() server: Server;
+  afterInit(server: Server) {
+    this.signalingService.injectServer(server);
+  }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just connected :', client.id);
@@ -31,17 +30,19 @@ export class SignalingGateway
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected :', client.id);
-    const socketIds = await this.signalingService.findSocketsByRoom('room');
-    this.server.to('room').emit('left', socketIds);
+    const roomId = 'room';
+    const socketIds = await this.signalingService.findSocketsByRoom(roomId);
+    this.signalingService.send<string[]>(roomId, 'left', socketIds);
   }
 
   @SubscribeMessage('join')
   async joinRoom(
     @ConnectedSocket() client: Socket,
   ): Promise<{ status: string }> {
-    client.join('room');
-    const socketIds = await this.signalingService.findSocketsByRoom('room');
-    this.server.to('room').emit('joined', socketIds);
+    const roomId = 'room';
+    client.join(roomId);
+    const socketIds = await this.signalingService.findSocketsByRoom(roomId);
+    this.signalingService.send<string[]>(roomId, 'joined', socketIds);
     return {
       status: 'OK',
     };

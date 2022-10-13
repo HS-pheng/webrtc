@@ -1,18 +1,21 @@
-import { SignalingGateway } from './signaling.gateway';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Server } from 'socket.io';
 
 @Injectable()
 export class SignalingService {
-  constructor(
-    @Inject(forwardRef(() => SignalingGateway))
-    private signalingGateway: SignalingGateway,
-  ) {}
+  server: Server;
+
+  injectServer(server: Server) {
+    this.server = server;
+  }
 
   async findSocketsByRoom(roomId: string): Promise<string[]> {
-    const sockets = await this.signalingGateway.server
-      .to(roomId)
-      .fetchSockets();
+    const sockets = await this.server.in(roomId).fetchSockets();
     const socketIds = sockets.map((socket) => socket.id);
     return socketIds;
+  }
+
+  send<T>(roomId: string, eventName: string, payload: T): void {
+    this.server.in(roomId).emit(eventName, payload);
   }
 }
