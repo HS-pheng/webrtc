@@ -11,12 +11,18 @@ export const useWebsocket = defineStore('socket', () => {
       console.log('socket connected');
       connected.value = true;
     });
-    socket.value.on('joined', console.log);
+    ['joined', 'left'].forEach((event) => {
+      socket.value.on(event, (socketIds) => {
+        console.log('Sockets in the room', socketIds);
+      });
+    });
+
     socket.value.connect();
   };
 
   const disconnect = () => {
     socket.value?.disconnect();
+    connected.value = false;
     socket.value = null;
   };
 
