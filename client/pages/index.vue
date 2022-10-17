@@ -1,36 +1,26 @@
 <template>
   <div class="flex flex-col items-center w-[400px] mx-auto my-20 border-2">
-    <h1>Socket connected: {{ ws.connected }}</h1>
-    <h2>Socket ID: {{ id }}</h2>
-    <button @click.prevent="disconnectSocket">Disconnect</button>
+    <video></video>
+    <button @click="send">Send</button>
+    <button>Receive</button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useWebsocket } from '../stores/useWebsocket';
+import { useMsManager } from '../stores/useMsManager';
 
-definePageMeta({
-  layout: 'default',
+const { msManager } = useMsManager();
+msManager.test().then((res) => {
+  console.log(res);
 });
 
-const ws = useWebsocket();
-
-onMounted(() => {
-  ws.connect();
-});
-
-watch(
-  () => ws.connected,
-  (value) => {
-    if (value) {
-      ws.socket.emit('join', 'test');
-    }
-  },
-);
-
-const id = computed(() => ws.socket?.id || '-');
-
-const disconnectSocket: any = () => {
-  ws.disconnect();
+const send: any = () => {
+  const setUpMode = 'send';
+  msManager.init(setUpMode);
 };
+
+// call init
+// call createProducer or createConsumer
+// createProducer send the local video to remote
+// createConsumer receives the remote video stream
 </script>
