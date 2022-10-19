@@ -4,6 +4,7 @@ import { Producer } from 'mediasoup-client/lib/Producer';
 import { Transport } from 'mediasoup-client/lib/Transport';
 import { useWebsocket } from './../stores/useWebsocket';
 import { SocketPromise } from './socket-promise';
+import { producerOptions } from '~~/constants/config';
 
 export class MsManager {
   device: Device | null = null;
@@ -14,72 +15,101 @@ export class MsManager {
   consumer: Consumer | null = null;
 
   constructor() {
-    const { socketPromise } = useWebsocket();
-    this.socketPromise = socketPromise as SocketPromise;
     try {
       this.device = new Device();
     } catch (err) {
-      console.log(err);
-      console.log(this.device);
+      throw new Error(err);
     }
   }
 
-  test() {
-    const res = this.socketPromise.request('test', {});
-    return res;
+  socketInit() {
+    const { socketPromise } = useWebsocket();
+    this.socketPromise = socketPromise as SocketPromise;
   }
 
-  // .init(attachEventListener (listen for setup params), and emit mediasoupSetup with the type of setup (consume, produce or both))
-  init(setUpMode: string) {
-    this.attachEventListener();
-    this.socketPromise.request('mediasoup-setup', { setUpMode });
-  }
-
-  attachEventListener() {
-    this.socketPromise.on('transport-setup', (payload) => {
-      console.log(payload);
-      this.setUpTransport(payload);
+  async init(setUpMode: string) {
+    const setUpParams = await this.socketPromise.request('transport-setup', {
+      setUpMode,
     });
+    await this.setUpTransport(setUpParams);
   }
 
-  setUpTransport(setUpParams) {
-    this.device.load({ routerRtpCapabilities: setUpParams.rtpCapabilities });
+  async setUpTransport(setUpParams) {
+    await this.device.load({
+      routerRtpCapabilities: setUpParams.rtpCapabilities,
+    });
     if (setUpParams.sendTransport) {
       this.sendTransport = this.device.createSendTransport(
         setUpParams.sendTransport,
       );
+      this.attachProduceEventListener();
     }
     if (setUpParams.recvTransport) {
       this.recvTransport = this.device.createRecvTransport(
         setUpParams.recvTransport,
       );
+      this.attachConsumeEventListener();
     }
-    // setUpTransportDto to
-    // load device
-    // create send transport if there is send transport params
-    // create recv transport if there is recv transport params
   }
 
-  createSendTransport() {
-    // create sendTrasnport and attach 'connect' and 'produce' event to it
-    // connect event when fired should send dtlsParameters
-    // produce event when fired should send kind and rtpParams
+  attachProduceEventListener() {
+    this.sendTransport.on('connect', async ({ dtlsParameters }, callback) => {
+      const success = await this.socketPromise.request('transport-connect', {
+        dtlsParameters,
+      });
+      if (success) {
+        callback();
+      }
+    });
+    this.sendTransport.on(
+      'produce',
+      async ({ kind, rtpParameters, appData }, callback) => {
+        const id = await this.socketPromise.request('transport-produce', {
+          kind,
+          rtpParameters,
+          appData,
+        });
+        // eslint-disable-next-line n/no-callback-literal
+        callback({ id });
+      },
+    );
   }
 
-  createRecvTransport() {
-    // create recvTransport and attach 'connect' to it
-    // connect event when fired should send dtlsParameters
+  attachConsumeEventListener() {
+    this.recvTransport.on('connect', async ({ dtlsParameters }, callback) => {
+      const success = await this.socketPromise.request(
+        'transport-recv-connect',
+        {
+          dtlsParameters,
+        },
+      );
+      if (success) {
+        callback();
+      }
+    });
   }
 
-  createProducer() {
-    // this method should receive the track from the localStream
-    // call sendTransport.produce then the producer will be created
+  async createProducer(track: MediaStreamTrack) {
+    this.producer = await this.sendTransport.produce({
+      track,
+      ...producerOptions,
+    });
   }
 
-  createConsumer() {
-    // emit ('consume') event and send the deviceRTPCapability
-    // server will determine if the device can consume the media
-    // if yes, take the payload from the server, and use it to call recvTransport.consume
-    // then the consumer will be created
+  async createConsumer() {
+    const deviceRTPCapabilities = this.device.rtpCapabilities;
+    const params = await this.socketPromise.request('consume', {
+      rtpCapabilities: deviceRTPCapabilities,
+    });
+
+    this.consumer = await this.recvTransport.consume({
+      id: params.id,
+      producerId: params.producerId,
+      kind: params.kind,
+      rtpParameters: params.rtpParameters,
+    });
+
+    await this.socketPromise.request('resume', {});
+    return this.consumer.track;
   }
 }

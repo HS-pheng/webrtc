@@ -6,7 +6,6 @@ import {
   OnGatewayDisconnect,
   OnGatewayInit,
   MessageBody,
-  WebSocketServer,
 } from '@nestjs/websockets';
 import { SignalingService } from './signaling.service';
 import { Socket, Server } from 'socket.io';
@@ -25,8 +24,6 @@ export class SignalingGateway
     private readonly msService: MsService,
   ) {}
 
-  @WebSocketServer() server: Server;
-
   afterInit(server: Server) {
     this.signalingService.injectServer(server);
   }
@@ -36,50 +33,41 @@ export class SignalingGateway
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just disconnected :', client.id);
-    const roomId = 'room';
-    const socketIds = await this.signalingService.findSocketsByRoom(roomId);
-    this.signalingService.send<string[]>(roomId, 'left', socketIds);
+    console.log('This client just disconnected : ', client.id);
   }
 
-  @SubscribeMessage('test')
-  test() {
-    return {
-      status: 'ok',
-    };
-  }
-
-  @SubscribeMessage('getRouterRTPCapabilities')
-  getRouterRTPCapability() {
-    return {
-      rtpCapabilities: this.msService.getRouterRTPCapabilities(),
-    };
-  }
-
-  // subscribeMessage('mediasoup-setup')
-  // should receive the socketId, the type of setUp, (a send or receive for the transport)
-  // should send back all the setup requirement like routerRTPCaps, and transportParameters (based on send or receive)
-
-  @SubscribeMessage('mediasoup-setup')
-  async mediasoupSetup(
-    @MessageBody() body: { setUpMode: string },
-  ): Promise<void> {
+  @SubscribeMessage('transport-setup')
+  async transportSetup(@MessageBody() body: { setUpMode: string }) {
     const { setUpMode } = body;
     const setUpParams = await this.msService.transportSetUp(setUpMode);
-    console.log('setup', setUpParams);
-    this.server.emit('transport-setup', setUpParams);
+    return setUpParams;
   }
 
-  // (transport-connect) message
-  // should receive the dtlsparameter and use that to call produceTransport.connect()
-  // (transport-produce) message
-  // should receive the kind and rtpParameter (track included) and call the produceTransport.produce()
-  // should return the producer.id
+  @SubscribeMessage('transport-connect')
+  async transportConnect(@MessageBody() body): Promise<boolean> {
+    const { dtlsParameters } = body;
+    return this.msService.transportConnect(dtlsParameters);
+  }
 
-  // (consume) message
-  // should recieve the deviceRTPCapability and run the canConsume function
-  // if canConsume, then use the consumerTransport to call .consume
-  // then return the consumerId, producerId, consumer.kind, consumer.rtpParameters
-  // (transport-recv-connect) message
-  // should receive the dtlsparameter and us that to call the consumerTransport.connect()
+  @SubscribeMessage('transport-produce')
+  async transportProduce(@MessageBody() body): Promise<string> {
+    return this.msService.transportProduce(body);
+  }
+
+  @SubscribeMessage('transport-recv-connect')
+  async transportRecvConnect(@MessageBody() body): Promise<boolean> {
+    const { dtlsParameters } = body;
+    return this.msService.transportRecvConnect(dtlsParameters);
+  }
+
+  @SubscribeMessage('consume')
+  async transportConsume(@MessageBody() body) {
+    const { rtpCapabilities } = body;
+    return this.msService.transportConsume(rtpCapabilities);
+  }
+
+  @SubscribeMessage('resume')
+  async resumeConsumer(): Promise<boolean> {
+    return this.msService.resumeConsumer();
+  }
 }

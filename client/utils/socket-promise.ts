@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io-client';
 export interface SocketPromise extends Socket {
   request(endpoint: string, payload: object, timeout?: number): Promise<any>;
+  listen(endpoint: string, timeout?: number): Promise<any>;
 }
 
 export function makeSocketPromise(
@@ -16,7 +17,17 @@ export function makeSocketPromise(
     return new Promise((resolve, reject) => {
       setTimeout(() => reject(new Error('Timeout!')), timeout);
       socket.emit(endpoint, payload, (res) => {
-        console.log('got res');
+        resolve(res);
+      });
+    });
+  };
+  socketPromise.listen = (
+    endpoint: string,
+    timeout: number = requestTimeout,
+  ) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => reject(new Error('Timeout!')), timeout);
+      socket.on(endpoint, (res) => {
         resolve(res);
       });
     });

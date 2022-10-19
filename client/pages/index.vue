@@ -1,26 +1,47 @@
 <template>
   <div class="flex flex-col items-center w-[400px] mx-auto my-20 border-2">
-    <video></video>
-    <button @click="send">Send</button>
-    <button>Receive</button>
+    <video
+      id="video"
+      ref="video"
+      class="transform rotate-y-180"
+      autoplay
+      playsinline
+    ></video>
+    <div class="flex gap-4">
+      <button @click="send">Send</button>
+      <button @click="receive">Receive</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useMsManager } from '../stores/useMsManager';
+const { $msManager } = useNuxtApp();
 
-const { msManager } = useMsManager();
-msManager.test().then((res) => {
-  console.log(res);
-});
+$msManager?.socketInit();
+const video = ref(null);
 
-const send: any = () => {
+const send: any = async (): Promise<void> => {
+  const localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+  });
   const setUpMode = 'send';
-  msManager.init(setUpMode);
+  await $msManager?.init(setUpMode);
+  await $msManager?.createProducer(localStream.getVideoTracks()[0]);
+  video.value.srcObject = localStream;
 };
 
-// call init
-// call createProducer or createConsumer
-// createProducer send the local video to remote
-// createConsumer receives the remote video stream
+const receive: any = async (): Promise<void> => {
+  const setUpMode = 'recv';
+  await $msManager?.init(setUpMode);
+  const remoteTrack = await $msManager?.createConsumer();
+  const remoteStream = new MediaStream([remoteTrack]);
+  video.value.srcObject = remoteStream;
+};
 </script>
+
+<style scoped>
+video {
+  width: 320px;
+  filter: grayscale();
+}
+</style>
