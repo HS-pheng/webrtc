@@ -1,6 +1,5 @@
 import { workerSettings, mediaCodecs } from './../../config/mediasoup';
 import { Injectable } from '@nestjs/common';
-// import { CoreService } from './core.service';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
 import { createWorker } from 'mediasoup';
@@ -12,123 +11,154 @@ import { RtpCapabilities } from 'mediasoup/node/lib/RtpParameters';
 import { Producer } from 'mediasoup/node/lib/Producer';
 import { Consumer } from 'mediasoup/node/lib/Consumer';
 import * as mediasoup from 'mediasoup';
+import { extractTransportData } from 'src/utils/utils';
 
 @Injectable()
 export class MsService {
-  //   constructor(private coreService: CoreService) {}
-
-  private sendTransport: WebRtcTransport = null;
-  private producer: Producer = null;
-  private consumer: Consumer = null;
-  private recvTransport: WebRtcTransport = null;
-
   private worker: Worker = null;
   private router: Router = null;
 
   private listenIps = [
     {
       ip: '0.0.0.0',
-      announcedIp: '172.20.10.3',
+      announcedIp: '192.168.1.127',
     },
   ];
 
   async onModuleInit() {
     this.worker = await createWorker(workerSettings);
-    this.router = await this.worker.createRouter({ mediaCodecs });
+    this.router = await this.worker.createRouter({
+      mediaCodecs,
+      appData: {
+        transports: new Map<string, WebRtcTransport>(),
+        users: new Map(),
+        producers: new Map(),
+        consumers: new Map(),
+      },
+    });
     this.setUpObservers();
   }
 
-  async transportSetUp(setUpMode) {
-    switch (setUpMode) {
-      case 'send':
-        this.sendTransport = await this.router.createWebRtcTransport({
-          listenIps: this.listenIps,
-        });
-        break;
-      case 'recv':
-        this.recvTransport = await this.router.createWebRtcTransport({
-          listenIps: this.listenIps,
-        });
-        break;
-    }
+  async transportSetUp(setUpMode, socketId) {
+    const transports = {
+      sendTransport:
+        setUpMode === 'send' || setUpMode === 'both'
+          ? await this.createTransport('send', socketId)
+          : undefined,
+      recvTransport:
+        setUpMode === 'recv' || setUpMode === 'both'
+          ? await this.createTransport('recv', socketId)
+          : undefined,
+    };
+
     return {
       rtpCapabilities: this.router.rtpCapabilities,
-      recvTransport:
-        setUpMode === 'recv'
-          ? {
-              id: this.recvTransport?.id,
-              iceParameters: this.recvTransport?.iceParameters,
-              iceCandidates: this.recvTransport?.iceCandidates,
-              dtlsParameters: this.recvTransport?.dtlsParameters,
-            }
-          : null,
-      sendTransport:
-        setUpMode === 'send'
-          ? {
-              id: this.sendTransport?.id,
-              iceParameters: this.sendTransport?.iceParameters,
-              iceCandidates: this.sendTransport?.iceCandidates,
-              dtlsParameters: this.sendTransport?.dtlsParameters,
-            }
-          : null,
+      recvTransport: extractTransportData(transports.recvTransport),
+      sendTransport: extractTransportData(transports.sendTransport),
     };
   }
 
-  async transportConnect(dtlsParameters: DtlsParameters) {
+  async createTransport(type, uid) {
+    const transport = await this.router.createWebRtcTransport({
+      listenIps: this.listenIps,
+      appData: {
+        type,
+        uid,
+      },
+    });
+
+    (this.router.appData.transports as Map<string, WebRtcTransport>).set(
+      transport.id,
+      transport,
+    );
+
+    return transport;
+  }
+
+  async transportConnect(dtlsParameters: DtlsParameters, transportId: string) {
+    const transport = (
+      this.router.appData.transports as Map<string, WebRtcTransport>
+    ).get(transportId);
+
+    if (!transport) return false;
+
     try {
-      await this.sendTransport.connect({ dtlsParameters });
+      await transport.connect({ dtlsParameters });
     } catch (err) {
       return false;
     }
     return true;
   }
 
-  async transportRecvConnect(dtlsParameters: DtlsParameters) {
-    try {
-      await this.recvTransport.connect({ dtlsParameters });
-    } catch (err) {
-      return false;
-    }
-    return true;
+  async transportProduce(params, transportId) {
+    const transport = (
+      this.router.appData.transports as Map<string, WebRtcTransport>
+    ).get(transportId);
+
+    if (!transport) return null;
+
+    const producer = await transport.produce({
+      kind: params.kind,
+      rtpParameters: params.rtpParameters,
+      appData: {
+        uid: transport.appData.uid,
+      },
+    });
+
+    (this.router.appData.producers as Map<string, Producer>).set(
+      producer.id,
+      producer,
+    );
+
+    return producer.id;
   }
 
-  async transportProduce(payload) {
-    this.producer = await this.sendTransport.produce({
-      kind: payload.kind,
-      rtpParameters: payload.rtpParameters,
-    });
-    this.producer.on('transportclose', () => {
-      console.log('transportclosed');
-    });
-    return this.producer.id;
-  }
+  async joinRoom(rtpCapabilities: RtpCapabilities, transportId: string) {
+    const transport = (
+      this.router.appData.transports as Map<string, WebRtcTransport>
+    ).get(transportId);
 
-  async transportConsume(rtpCapabilities: RtpCapabilities) {
+    // to avoid using the previously unclosed producers -- for temporary dev only, because multiparty call is not supported yet
+    // it suppose to response with an array of consumers for each producers in the router
+    const producers = [];
+    (this.router.appData.producers as Map<string, Producer>).forEach((val) =>
+      producers.push(val),
+    );
+    const producer = producers[producers.length - 1];
+
     const canConsume = this.router.canConsume({
-      producerId: this.producer?.id,
+      producerId: producer.id,
       rtpCapabilities,
     });
 
-    if (canConsume) {
-      this.consumer = await this.recvTransport.consume({
-        producerId: this.producer.id,
-        rtpCapabilities,
-        paused: true,
-      });
-      const res = {
-        id: this.consumer.id,
-        producerId: this.producer.id,
-        kind: this.consumer.kind,
-        rtpParameters: this.consumer.rtpParameters,
-      };
-      return res;
-    }
-    return null;
+    if (!canConsume) return null;
+
+    const consumer = await transport.consume({
+      producerId: producer.id,
+      rtpCapabilities,
+      paused: true,
+    });
+
+    (this.router.appData.consumers as Map<string, Consumer>).set(
+      consumer.id,
+      consumer,
+    );
+
+    return {
+      id: consumer.id,
+      producerId: producer.id,
+      kind: consumer.kind,
+      rtpParameters: consumer.rtpParameters,
+    };
   }
 
-  async resumeConsumer() {
+  async resumeConsumer(consumerId: string) {
+    const consumer = (
+      this.router.appData.consumers as Map<string, Consumer>
+    ).get(consumerId);
+
     try {
-      await this.consumer.resume();
+      await consumer.resume();
     } catch (err) {
       return false;
     }

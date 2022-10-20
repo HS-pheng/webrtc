@@ -18,6 +18,7 @@ services:
       context: ./client
     ports:
       - '${WEB_PORT}:3000'
+      - 24678:24678
     volumes:
       - ./client:/app:cached
     networks:
@@ -36,7 +37,7 @@ services:
     image: phpmyadmin/phpmyadmin
     ports:
       - 8080:80
-    links: 
+    links:
       - db
     networks:
       - app_network

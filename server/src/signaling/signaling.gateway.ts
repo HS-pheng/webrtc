@@ -29,45 +29,49 @@ export class SignalingGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just connected :', client.id);
+    console.log('This client just connected : ', client.id);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected : ', client.id);
+    // close transport
+    // close producer and consumer
   }
 
   @SubscribeMessage('transport-setup')
-  async transportSetup(@MessageBody() body: { setUpMode: string }) {
+  async transportSetup(
+    @MessageBody() body: { setUpMode: string },
+    @ConnectedSocket() client,
+  ) {
     const { setUpMode } = body;
-    const setUpParams = await this.msService.transportSetUp(setUpMode);
+    const setUpParams = await this.msService.transportSetUp(
+      setUpMode,
+      client.id,
+    );
     return setUpParams;
   }
 
   @SubscribeMessage('transport-connect')
   async transportConnect(@MessageBody() body): Promise<boolean> {
-    const { dtlsParameters } = body;
-    return this.msService.transportConnect(dtlsParameters);
+    const { dtlsParameters, transportId } = body;
+    return this.msService.transportConnect(dtlsParameters, transportId);
   }
 
   @SubscribeMessage('transport-produce')
-  async transportProduce(@MessageBody() body): Promise<string> {
-    return this.msService.transportProduce(body);
-  }
-
-  @SubscribeMessage('transport-recv-connect')
-  async transportRecvConnect(@MessageBody() body): Promise<boolean> {
-    const { dtlsParameters } = body;
-    return this.msService.transportRecvConnect(dtlsParameters);
+  async transportProduce(@MessageBody() body): Promise<string | null> {
+    const { transportId, ...params } = body;
+    return this.msService.transportProduce(params, transportId);
   }
 
   @SubscribeMessage('consume')
   async transportConsume(@MessageBody() body) {
-    const { rtpCapabilities } = body;
-    return this.msService.transportConsume(rtpCapabilities);
+    const { rtpCapabilities, transportId } = body;
+    return this.msService.joinRoom(rtpCapabilities, transportId);
   }
 
-  @SubscribeMessage('resume')
-  async resumeConsumer(): Promise<boolean> {
-    return this.msService.resumeConsumer();
+  @SubscribeMessage('resume-consumer')
+  async resumeConsumer(@MessageBody() body): Promise<boolean> {
+    const { consumerId } = body;
+    return this.msService.resumeConsumer(consumerId);
   }
 }

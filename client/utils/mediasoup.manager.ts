@@ -9,8 +9,10 @@ import { producerOptions } from '~~/constants/config';
 export class MsManager {
   device: Device | null = null;
   socketPromise: SocketPromise | null = null;
+
   sendTransport: Transport | null = null;
   recvTransport: Transport | null = null;
+
   producer: Producer | null = null;
   consumer: Consumer | null = null;
 
@@ -56,6 +58,7 @@ export class MsManager {
     this.sendTransport.on('connect', async ({ dtlsParameters }, callback) => {
       const success = await this.socketPromise.request('transport-connect', {
         dtlsParameters,
+        transportId: this.sendTransport.id,
       });
       if (success) {
         callback();
@@ -67,6 +70,7 @@ export class MsManager {
         const id = await this.socketPromise.request('transport-produce', {
           kind,
           rtpParameters,
+          transportId: this.sendTransport.id,
           appData,
         });
         // eslint-disable-next-line n/no-callback-literal
@@ -77,12 +81,10 @@ export class MsManager {
 
   attachConsumeEventListener() {
     this.recvTransport.on('connect', async ({ dtlsParameters }, callback) => {
-      const success = await this.socketPromise.request(
-        'transport-recv-connect',
-        {
-          dtlsParameters,
-        },
-      );
+      const success = await this.socketPromise.request('transport-connect', {
+        dtlsParameters,
+        transportId: this.recvTransport.id,
+      });
       if (success) {
         callback();
       }
@@ -100,6 +102,7 @@ export class MsManager {
     const deviceRTPCapabilities = this.device.rtpCapabilities;
     const params = await this.socketPromise.request('consume', {
       rtpCapabilities: deviceRTPCapabilities,
+      transportId: this.recvTransport.id,
     });
 
     this.consumer = await this.recvTransport.consume({
@@ -109,7 +112,9 @@ export class MsManager {
       rtpParameters: params.rtpParameters,
     });
 
-    await this.socketPromise.request('resume', {});
+    await this.socketPromise.request('resume-consumer', {
+      consumerId: this.consumer.id,
+    });
     return this.consumer.track;
   }
 }
