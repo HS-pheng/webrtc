@@ -4,13 +4,14 @@ import { SocketPromise, makeSocketPromise } from '~~/utils/socket-promise';
 
 export const useWebsocket = defineStore('socket', () => {
   const socket = io('http://localhost:3001', { autoConnect: false });
-  socket.on('connect', () => {
-    console.log('socket connected');
-  });
-  socket.connect();
+
+  const connect = () => {
+    socket.connect();
+  };
 
   const socketPromise: SocketPromise = makeSocketPromise(socket);
   return {
     socketPromise,
+    connect,
   };
 });

@@ -29,11 +29,11 @@ export class SignalingGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just connected : ', client.id);
+    console.log('This client just connected :', client.id);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just disconnected : ', client.id);
+    console.log('This client just disconnected :', client.id);
     // close transport
     // close producer and consumer
   }

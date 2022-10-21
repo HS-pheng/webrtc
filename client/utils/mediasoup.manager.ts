@@ -37,58 +37,60 @@ export class MsManager {
   }
 
   async setUpTransport(setUpParams) {
-    await this.device.load({
-      routerRtpCapabilities: setUpParams.rtpCapabilities,
-    });
+    if (!this.device.loaded) {
+      await this.device.load({
+        routerRtpCapabilities: setUpParams.rtpCapabilities,
+      });
+    }
     if (setUpParams.sendTransport) {
       this.sendTransport = this.device.createSendTransport(
         setUpParams.sendTransport,
       );
-      this.attachProduceEventListener();
+      this.attachTransportEventListener('send');
     }
     if (setUpParams.recvTransport) {
       this.recvTransport = this.device.createRecvTransport(
         setUpParams.recvTransport,
       );
-      this.attachConsumeEventListener();
+      this.attachTransportEventListener('recv');
     }
   }
 
-  attachProduceEventListener() {
-    this.sendTransport.on('connect', async ({ dtlsParameters }, callback) => {
-      const success = await this.socketPromise.request('transport-connect', {
-        dtlsParameters,
-        transportId: this.sendTransport.id,
-      });
-      if (success) {
-        callback();
-      }
-    });
-    this.sendTransport.on(
-      'produce',
-      async ({ kind, rtpParameters, appData }, callback) => {
-        const id = await this.socketPromise.request('transport-produce', {
-          kind,
-          rtpParameters,
-          transportId: this.sendTransport.id,
-          appData,
+  attachTransportEventListener(type: 'send' | 'recv') {
+    let targetTransport = this.recvTransport;
+    if (type === 'send') {
+      targetTransport = this.sendTransport;
+      targetTransport.on(
+        'produce',
+        async ({ kind, rtpParameters, appData }, callback, errback) => {
+          const id = await this.socketPromise.request('transport-produce', {
+            kind,
+            rtpParameters,
+            transportId: targetTransport.id,
+            appData,
+          });
+          if (!id) {
+            errback(new Error('cannot create producer'));
+          }
+          // eslint-disable-next-line n/no-callback-literal
+          callback({ id });
+        },
+      );
+    }
+    targetTransport.on(
+      'connect',
+      async ({ dtlsParameters }, callback, errback) => {
+        const success = await this.socketPromise.request('transport-connect', {
+          dtlsParameters,
+          transportId: targetTransport.id,
         });
-        // eslint-disable-next-line n/no-callback-literal
-        callback({ id });
+        if (success) {
+          callback();
+        } else {
+          errback(new Error('connection failed'));
+        }
       },
     );
-  }
-
-  attachConsumeEventListener() {
-    this.recvTransport.on('connect', async ({ dtlsParameters }, callback) => {
-      const success = await this.socketPromise.request('transport-connect', {
-        dtlsParameters,
-        transportId: this.recvTransport.id,
-      });
-      if (success) {
-        callback();
-      }
-    });
   }
 
   async createProducer(track: MediaStreamTrack) {
@@ -105,12 +107,7 @@ export class MsManager {
       transportId: this.recvTransport.id,
     });
 
-    this.consumer = await this.recvTransport.consume({
-      id: params.id,
-      producerId: params.producerId,
-      kind: params.kind,
-      rtpParameters: params.rtpParameters,
-    });
+    this.consumer = await this.recvTransport.consume(params);
 
     await this.socketPromise.request('resume-consumer', {
       consumerId: this.consumer.id,
