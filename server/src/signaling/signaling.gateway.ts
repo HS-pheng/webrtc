@@ -34,8 +34,7 @@ export class SignalingGateway
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected :', client.id);
-    // close transport
-    // close producer and consumer
+    this.msService.closeUserTransports(client.id);
   }
 
   @SubscribeMessage('transport-setup')

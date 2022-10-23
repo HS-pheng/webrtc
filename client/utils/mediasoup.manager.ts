@@ -15,6 +15,8 @@ export class MsManager {
   producer: Producer | null = null;
   consumer: Consumer | null = null;
 
+  peers = [];
+
   constructor() {
     try {
       this.device = new Device();

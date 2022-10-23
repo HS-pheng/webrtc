@@ -106,6 +106,10 @@ export class MsService {
       },
     });
 
+    producer.on('transportclose', () => {
+      // inform client that consumes the producer to close the consumer and make change to the UI
+    });
+
     (this.router.appData.producers as Map<string, Producer>).set(
       producer.id,
       producer,
@@ -164,5 +168,17 @@ export class MsService {
       return false;
     }
     return true;
+  }
+
+  closeUserTransports(clientId: string) {
+    for (const [transportId, transport] of this.router.appData
+      .transports as Map<string, WebRtcTransport>) {
+      if (transport.appData.uid === clientId) {
+        transport.close();
+        (this.router.appData.transports as Map<string, WebRtcTransport>).delete(
+          transportId,
+        );
+      }
+    }
   }
 }
