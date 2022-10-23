@@ -61,6 +61,7 @@ const receive: any = async (): Promise<void> => {
 <style scoped>
 video {
   width: 320px;
+  background-color: black;
   filter: grayscale();
 }
 </style>
