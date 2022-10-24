@@ -3,15 +3,15 @@ import { io } from 'socket.io-client';
 import { SocketPromise, makeSocketPromise } from '~~/utils/socket-promise';
 
 export const useWebsocket = defineStore('socket', () => {
-  const socket = io('http://localhost:3001', { autoConnect: false });
+  const socketPromise = ref<SocketPromise | null>(null);
 
   const connect = () => {
+    const socket = io('http://localhost:3001', { autoConnect: false });
+    socketPromise.value = makeSocketPromise(socket);
     socket.connect();
   };
-
-  const socketPromise: SocketPromise = makeSocketPromise(socket);
   return {
-    socketPromise,
+    socket: socketPromise,
     connect,
   };
 });

@@ -21,8 +21,8 @@ export class MsService {
   private listenIps = [
     {
       ip: '0.0.0.0',
-      // announcedIp: '192.168.1.127',
-      announcedIp: '172.30.224.1',
+      announcedIp: '192.168.1.127',
+      // announcedIp: '172.30.224.1',
     },
   ];
 

@@ -2,13 +2,12 @@ import { Device } from 'mediasoup-client';
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { Producer } from 'mediasoup-client/lib/Producer';
 import { Transport } from 'mediasoup-client/lib/Transport';
-import { useWebsocket } from './../stores/useWebsocket';
 import { SocketPromise } from './socket-promise';
 import { producerOptions } from '~~/constants/config';
 
 export class MsManager {
   device: Device | null = null;
-  socketPromise: SocketPromise | null = null;
+  socket: SocketPromise | null = null;
 
   sendTransport: Transport | null = null;
   recvTransport: Transport | null = null;
@@ -24,13 +23,12 @@ export class MsManager {
     }
   }
 
-  socketInit() {
-    const { socketPromise } = useWebsocket();
-    this.socketPromise = socketPromise as SocketPromise;
+  socketInit(socket: SocketPromise) {
+    this.socket = socket;
   }
 
   async init(setUpMode: string) {
-    const setUpParams = await this.socketPromise.request('transport-setup', {
+    const setUpParams = await this.socket.request('transport-setup', {
       setUpMode,
     });
     await this.setUpTransport(setUpParams);
@@ -63,31 +61,35 @@ export class MsManager {
       targetTransport.on(
         'produce',
         async ({ kind, rtpParameters, appData }, callback, errback) => {
-          const id = await this.socketPromise.request('transport-produce', {
-            kind,
-            rtpParameters,
-            transportId: targetTransport.id,
-            appData,
-          });
-          if (!id) {
-            errback(new Error('cannot create producer'));
+          try {
+            const id = await this.socket.request('transport-produce', {
+              kind,
+              rtpParameters,
+              transportId: targetTransport.id,
+              appData,
+            });
+
+            if (!id) throw new Error('cannot create producer');
+            // eslint-disable-next-line n/no-callback-literal
+            callback({ id });
+          } catch (e) {
+            errback(e);
           }
-          // eslint-disable-next-line n/no-callback-literal
-          callback({ id });
         },
       );
     }
     targetTransport.on(
       'connect',
       async ({ dtlsParameters }, callback, errback) => {
-        const success = await this.socketPromise.request('transport-connect', {
-          dtlsParameters,
-          transportId: targetTransport.id,
-        });
-        if (success) {
+        try {
+          const success = await this.socket.request('transport-connect', {
+            dtlsParameters,
+            transportId: targetTransport.id,
+          });
+          if (!success) throw new Error('connection failed');
           callback();
-        } else {
-          errback(new Error('connection failed'));
+        } catch (e) {
+          errback(e);
         }
       },
     );
@@ -102,14 +104,14 @@ export class MsManager {
 
   async createConsumer() {
     const deviceRTPCapabilities = this.device.rtpCapabilities;
-    const params = await this.socketPromise.request('consume', {
+    const params = await this.socket.request('consume', {
       rtpCapabilities: deviceRTPCapabilities,
       transportId: this.recvTransport.id,
     });
 
     this.consumer = await this.recvTransport.consume(params);
 
-    await this.socketPromise.request('resume-consumer', {
+    await this.socket.request('resume-consumer', {
       consumerId: this.consumer.id,
     });
     return this.consumer.track;
