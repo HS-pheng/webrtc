@@ -2,13 +2,14 @@ import {
   ConnectedSocket,
   SubscribeMessage,
   WebSocketGateway,
-  WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  MessageBody,
 } from '@nestjs/websockets';
 import { SignalingService } from './signaling.service';
 import { Socket, Server } from 'socket.io';
+import { MsService } from 'src/plugin/ms.service';
 
 @WebSocketGateway({
   cors: {
@@ -18,7 +19,10 @@ import { Socket, Server } from 'socket.io';
 export class SignalingGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  constructor(private readonly signalingService: SignalingService) {}
+  constructor(
+    private readonly signalingService: SignalingService,
+    private readonly msService: MsService,
+  ) {}
 
   afterInit(server: Server) {
     this.signalingService.injectServer(server);
@@ -30,21 +34,44 @@ export class SignalingGateway
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected :', client.id);
-    const roomId = 'room';
-    const socketIds = await this.signalingService.findSocketsByRoom(roomId);
-    this.signalingService.send<string[]>(roomId, 'left', socketIds);
+    // close transport
+    // close producer and consumer
   }
 
-  @SubscribeMessage('join')
-  async joinRoom(
-    @ConnectedSocket() client: Socket,
-  ): Promise<{ status: string }> {
-    const roomId = 'room';
-    client.join(roomId);
-    const socketIds = await this.signalingService.findSocketsByRoom(roomId);
-    this.signalingService.send<string[]>(roomId, 'joined', socketIds);
-    return {
-      status: 'OK',
-    };
+  @SubscribeMessage('transport-setup')
+  async transportSetup(
+    @MessageBody() body: { setUpMode: string },
+    @ConnectedSocket() client,
+  ) {
+    const { setUpMode } = body;
+    const setUpParams = await this.msService.transportSetUp(
+      setUpMode,
+      client.id,
+    );
+    return setUpParams;
+  }
+
+  @SubscribeMessage('transport-connect')
+  async transportConnect(@MessageBody() body): Promise<boolean> {
+    const { dtlsParameters, transportId } = body;
+    return this.msService.transportConnect(dtlsParameters, transportId);
+  }
+
+  @SubscribeMessage('transport-produce')
+  async transportProduce(@MessageBody() body): Promise<string | null> {
+    const { transportId, ...params } = body;
+    return this.msService.transportProduce(params, transportId);
+  }
+
+  @SubscribeMessage('consume')
+  async transportConsume(@MessageBody() body) {
+    const { rtpCapabilities, transportId } = body;
+    return this.msService.joinRoom(rtpCapabilities, transportId);
+  }
+
+  @SubscribeMessage('resume-consumer')
+  async resumeConsumer(@MessageBody() body): Promise<boolean> {
+    const { consumerId } = body;
+    return this.msService.resumeConsumer(consumerId);
   }
 }

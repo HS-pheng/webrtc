@@ -1,36 +1,67 @@
 <template>
-  <div class="flex flex-col items-center w-[400px] mx-auto my-20 border-2">
-    <h1>Socket connected: {{ ws.connected }}</h1>
-    <h2>Socket ID: {{ id }}</h2>
-    <button @click.prevent="disconnectSocket">Disconnect</button>
+  <div class="flex">
+    <div class="mx-auto flex flex-row">
+      <div class="flex flex-col">
+        <h3 class="text-center">Local video</h3>
+        <video
+          ref="localVideo"
+          class="transform rotate-y-180 bg-gray-500"
+          autoplay
+          playsinline
+        ></video>
+        <button class="self-center" @click="send">Send</button>
+      </div>
+      <div class="flex flex-col">
+        <h3 class="text-center">Remote video</h3>
+        <video
+          ref="remoteVideo"
+          class="transform rotate-y-180 bg-gray-500"
+          autoplay
+          playsinline
+        ></video>
+        <button class="self-center" @click="receive">Receive</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useWebsocket } from '../stores/useWebsocket';
+import { useWebsocket } from '~~/stores/useWebsocket';
+import { SocketPromise } from '~~/utils/socket-promise';
 
-definePageMeta({
-  layout: 'default',
-});
-
+const { $msManager } = useNuxtApp();
 const ws = useWebsocket();
 
 onMounted(() => {
   ws.connect();
+  $msManager.socketInit(ws.socket as SocketPromise);
 });
 
-watch(
-  () => ws.connected,
-  (value) => {
-    if (value) {
-      ws.socket.emit('join', 'test');
-    }
-  },
-);
+const localVideo = ref(null);
+const remoteVideo = ref(null);
 
-const id = computed(() => ws.socket?.id || '-');
+const send: any = async (): Promise<void> => {
+  const localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+  });
+  const setUpMode = 'send';
+  await $msManager.init(setUpMode);
+  await $msManager.createProducer(localStream.getVideoTracks()[0]);
+  localVideo.value.srcObject = localStream;
+};
 
-const disconnectSocket: any = () => {
-  ws.disconnect();
+const receive: any = async (): Promise<void> => {
+  const setUpMode = 'recv';
+  await $msManager.init(setUpMode);
+  const remoteTrack = await $msManager.createConsumer();
+  const remoteStream = new MediaStream([remoteTrack]);
+  remoteVideo.value.srcObject = remoteStream;
 };
 </script>
+
+<style scoped>
+video {
+  width: 320px;
+  filter: grayscale();
+}
+</style>
