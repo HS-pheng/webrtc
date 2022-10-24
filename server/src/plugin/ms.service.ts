@@ -12,9 +12,12 @@ import { Producer } from 'mediasoup/node/lib/Producer';
 import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
+import { SignalingService } from 'src/signaling/signaling.service';
 
 @Injectable()
 export class MsService {
+  constructor(private signalingService: SignalingService) {}
+
   private worker: Worker = null;
   private router: Router = null;
 
@@ -22,7 +25,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       announcedIp: '192.168.1.127',
-      // announcedIp: '172.25.224.1',
+      // announcedIp: '172.30.224.1',
     },
   ];
 
@@ -91,7 +94,7 @@ export class MsService {
     return true;
   }
 
-  async transportProduce(params, transportId) {
+  async transportProduce(params, transportId, clientId) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -107,7 +110,8 @@ export class MsService {
     });
 
     producer.on('transportclose', () => {
-      // inform client that consumes the producer to close the consumer and make change to the UI
+      // inform client that consumes the producer (or clients in the room) to close the consumer and make change to the UI
+      this.signalingService.server.emit('producer-closed', {});
     });
 
     (this.router.appData.producers as Map<string, Producer>).set(
