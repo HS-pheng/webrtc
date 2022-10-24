@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
+import { SignalingModule } from 'src/signaling/signaling.module';
+import { SignalingService } from 'src/signaling/signaling.service';
 import { MsService } from './ms.service';
-// import { CoreService } from './core.service';
-// import { RouterService } from './router.service';
 
 @Module({
-  providers: [MsService],
+  imports: [SignalingModule],
+  providers: [MsService, SignalingService],
   exports: [MsService],
 })
 export class MsModule {}
