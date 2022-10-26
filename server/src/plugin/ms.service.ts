@@ -12,17 +12,20 @@ import { Producer } from 'mediasoup/node/lib/Producer';
 import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
+import { SignalingService } from 'src/signaling/signaling.service';
 
 @Injectable()
 export class MsService {
+  constructor(private signalingService: SignalingService) {}
+
   private worker: Worker = null;
   private router: Router = null;
 
   private listenIps = [
     {
       ip: '0.0.0.0',
-      announcedIp: '192.168.1.127',
-      // announcedIp: '172.30.224.1',
+      // announcedIp: '192.168.1.127',
+      announcedIp: '172.17.62.152',
     },
   ];
 
@@ -106,6 +109,14 @@ export class MsService {
       },
     });
 
+    producer.observer.on('close', () => {
+      // inform client that consumes the producer (or clients in the room) to close the consumer and make change to the UI
+      (this.router.appData.producers as Map<string, Producer>).delete(
+        producer.id,
+      );
+      this.signalingService.server.emit('producer-closed', {});
+    });
+
     (this.router.appData.producers as Map<string, Producer>).set(
       producer.id,
       producer,
@@ -164,5 +175,17 @@ export class MsService {
       return false;
     }
     return true;
+  }
+
+  closeUserTransports(clientId: string) {
+    for (const [transportId, transport] of this.router.appData
+      .transports as Map<string, WebRtcTransport>) {
+      if (transport.appData.uid === clientId) {
+        transport.close();
+        (this.router.appData.transports as Map<string, WebRtcTransport>).delete(
+          transportId,
+        );
+      }
+    }
   }
 }

@@ -7,7 +7,7 @@ import {
   OnGatewayInit,
   MessageBody,
 } from '@nestjs/websockets';
-import { SignalingService } from './signaling.service';
+import { SignalingService } from '../signaling/signaling.service';
 import { Socket, Server } from 'socket.io';
 import { MsService } from 'src/plugin/ms.service';
 
@@ -16,7 +16,7 @@ import { MsService } from 'src/plugin/ms.service';
     origin: '*',
   },
 })
-export class SignalingGateway
+export class LiveGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   constructor(
@@ -34,8 +34,7 @@ export class SignalingGateway
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected :', client.id);
-    // close transport
-    // close producer and consumer
+    this.msService.closeUserTransports(client.id);
   }
 
   @SubscribeMessage('transport-setup')
@@ -58,7 +57,10 @@ export class SignalingGateway
   }
 
   @SubscribeMessage('transport-produce')
-  async transportProduce(@MessageBody() body): Promise<string | null> {
+  async transportProduce(
+    @MessageBody() body,
+    @ConnectedSocket() client,
+  ): Promise<string | null> {
     const { transportId, ...params } = body;
     return this.msService.transportProduce(params, transportId);
   }

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
+import { SignalingModule } from 'src/signaling/signaling.module';
 import { MsService } from './ms.service';
-// import { CoreService } from './core.service';
-// import { RouterService } from './router.service';
 
 @Module({
+  imports: [SignalingModule],
   providers: [MsService],
   exports: [MsService],
 })
