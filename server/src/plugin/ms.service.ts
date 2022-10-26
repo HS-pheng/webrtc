@@ -24,8 +24,8 @@ export class MsService {
   private listenIps = [
     {
       ip: '0.0.0.0',
-      announcedIp: '192.168.1.127',
-      // announcedIp: '172.30.224.1',
+      // announcedIp: '192.168.1.127',
+      announcedIp: '172.17.62.152',
     },
   ];
 
@@ -94,7 +94,7 @@ export class MsService {
     return true;
   }
 
-  async transportProduce(params, transportId, clientId) {
+  async transportProduce(params, transportId) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -109,8 +109,11 @@ export class MsService {
       },
     });
 
-    producer.on('transportclose', () => {
+    producer.observer.on('close', () => {
       // inform client that consumes the producer (or clients in the room) to close the consumer and make change to the UI
+      (this.router.appData.producers as Map<string, Producer>).delete(
+        producer.id,
+      );
       this.signalingService.server.emit('producer-closed', {});
     });
 

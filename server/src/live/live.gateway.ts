@@ -62,7 +62,7 @@ export class LiveGateway
     @ConnectedSocket() client,
   ): Promise<string | null> {
     const { transportId, ...params } = body;
-    return this.msService.transportProduce(params, transportId, client.id);
+    return this.msService.transportProduce(params, transportId);
   }
 
   @SubscribeMessage('consume')

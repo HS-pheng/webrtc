@@ -10,6 +10,7 @@ export const useWebsocket = defineStore('socket', () => {
     const socket = io('http://localhost:3001', { autoConnect: false });
     socketPromise.value = makeSocketPromise(socket);
     socket.connect();
+    $msManager.socketInit(socket as SocketPromise);
     attachSocketEventListener(socket);
   };
 

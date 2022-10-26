@@ -27,14 +27,12 @@
 
 <script setup lang="ts">
 import { useWebsocket } from '~~/stores/useWebsocket';
-import { SocketPromise } from '~~/utils/socket-promise';
 
 const { $msManager } = useNuxtApp();
 const ws = useWebsocket();
 
 onMounted(() => {
   ws.connect();
-  $msManager.socketInit(ws.socket as SocketPromise);
 });
 
 const localVideo = ref(null);
