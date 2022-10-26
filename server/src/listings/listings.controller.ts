@@ -8,10 +8,7 @@ export class ListingsController {
 
   @Get()
   async getMany() {
-    console.warn('got many req');
-    const res = await this._service.getMany();
-    console.warn('res', res);
-    return res;
+    return this._service.getMany();
   }
 
   @Get(':id')
@@ -21,7 +18,6 @@ export class ListingsController {
 
   @Post()
   createOne(@Body() dto: CreateListingDto) {
-    console.warn('got create', dto);
     return this._service.create(dto);
   }
 }
