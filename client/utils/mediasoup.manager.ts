@@ -2,6 +2,7 @@ import { Device } from 'mediasoup-client';
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { Producer } from 'mediasoup-client/lib/Producer';
 import { Transport } from 'mediasoup-client/lib/Transport';
+import { usePeerStore } from '../stores/usePeerStore';
 import { SocketPromise } from './socket-promise';
 import { producerOptions } from '~~/constants/config';
 
@@ -15,11 +16,12 @@ export class MsManager {
   producer: Producer | null = null;
   consumer: Consumer | null = null;
 
-  peers = [];
+  peerStore = null;
 
   constructor() {
     try {
       this.device = new Device();
+      this.peerStore = usePeerStore();
     } catch (err) {
       throw new Error(err);
     }
@@ -27,6 +29,33 @@ export class MsManager {
 
   socketInit(socket: SocketPromise) {
     this.socket = socket;
+    this.attachSocketEventListener();
+  }
+
+  attachSocketEventListener() {
+    this.socket.on('producer-closed', (producerId) => {
+      console.log('producer closed, id: ', producerId);
+      this.peerStore.removePeer(producerId);
+      console.log('consumer closed');
+    });
+
+    this.socket.on('new-producer', async (producerId) => {
+      console.log('new producer id: ', producerId);
+      const params = await this.socket.request('get-new-producer', {
+        producerId,
+        rtpCapabilities: this.device.rtpCapabilities,
+        transportId: this.recvTransport.id,
+      });
+
+      const consumer = await this.recvTransport.consume(params);
+      console.log('new consumer: ', consumer.id);
+
+      await this.socket.request('resume-consumer', {
+        consumerId: consumer.id,
+      });
+
+      this.peerStore.addPeer(consumer);
+    });
   }
 
   async init(setUpMode: string) {
@@ -104,18 +133,23 @@ export class MsManager {
     });
   }
 
-  async createConsumer() {
+  async joinRoom() {
     const deviceRTPCapabilities = this.device.rtpCapabilities;
-    const params = await this.socket.request('consume', {
+    const params = await this.socket.request('join-room', {
       rtpCapabilities: deviceRTPCapabilities,
       transportId: this.recvTransport.id,
     });
 
-    this.consumer = await this.recvTransport.consume(params);
+    console.log({ params });
 
-    await this.socket.request('resume-consumer', {
-      consumerId: this.consumer.id,
+    params.forEach(async (e) => {
+      const consumer = await this.recvTransport.consume(e);
+      await this.socket.request('resume-consumer', {
+        consumerId: e.id,
+      });
+      // this.peerStore.peers.push(consumer);
+      this.peerStore.addPeer(consumer);
+      console.log('consumer id for resume: ', e.id);
     });
-    return this.consumer.track;
   }
 }

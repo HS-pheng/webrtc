@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { SignalingService } from '../signaling/signaling.service';
 import { Socket, Server } from 'socket.io';
-import { MsService } from 'src/plugin/ms.service';
+import { MsService } from 'src/mediasoup/ms.service';
 
 @WebSocketGateway({
   cors: {
@@ -59,16 +59,27 @@ export class LiveGateway
   @SubscribeMessage('transport-produce')
   async transportProduce(
     @MessageBody() body,
-    @ConnectedSocket() client,
+    @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
     const { transportId, ...params } = body;
-    return this.msService.transportProduce(params, transportId);
+    return this.msService.transportProduce(params, transportId, client);
   }
 
-  @SubscribeMessage('consume')
-  async transportConsume(@MessageBody() body) {
+  @SubscribeMessage('join-room')
+  async transportConsume(@MessageBody() body, @ConnectedSocket() client) {
     const { rtpCapabilities, transportId } = body;
-    return this.msService.joinRoom(rtpCapabilities, transportId);
+    return this.msService.joinRoom(rtpCapabilities, transportId, client.id);
+  }
+
+  @SubscribeMessage('get-new-producer')
+  async getNewProducer(@MessageBody() body, @ConnectedSocket() client) {
+    const { producerId, rtpCapabilities, transportId } = body;
+    return this.msService.getNewProducer(
+      producerId,
+      transportId,
+      rtpCapabilities,
+      client.id,
+    );
   }
 
   @SubscribeMessage('resume-consumer')

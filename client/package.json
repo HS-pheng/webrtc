@@ -8,10 +8,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@pinia/nuxt": "^0.4.3", 
+    "@pinia/nuxt": "^0.4.3",
     "mediasoup-client": "^3.6.57",
     "socket.io-client": "^4.5.2",
-    "typescript": "^4.8.4"
+    "typescript": "^4.8.4",
+    "@vueuse/nuxt": "9.4.0",
+    "@vueuse/core": "9.4.0"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config-typescript": "^11.0.0",

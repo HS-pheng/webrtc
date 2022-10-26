@@ -4,24 +4,24 @@ import { SocketPromise, makeSocketPromise } from '~~/utils/socket-promise';
 
 export const useWebsocket = defineStore('socket', () => {
   const { $msManager } = useNuxtApp();
+
   const socketPromise = ref<SocketPromise | null>(null);
+  const connected = ref<boolean>(false);
 
   const connect = () => {
     const socket = io('http://localhost:3001', { autoConnect: false });
     socketPromise.value = makeSocketPromise(socket);
+    socket.on('connect', () => {
+      console.log('connected');
+      connected.value = true;
+    });
     socket.connect();
     $msManager.socketInit(socket as SocketPromise);
-    attachSocketEventListener(socket);
   };
 
-  const attachSocketEventListener = (socket) => {
-    socket.on('producer-closed', () => {
-      $msManager.consumer.close();
-      console.log('consumer closed');
-    });
-  };
   return {
     socket: socketPromise,
     connect,
+    connected,
   };
 });
