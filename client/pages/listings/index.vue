@@ -27,14 +27,8 @@ const newListing = ref({
 });
 
 async function onCreate() {
-  const body = {
-    ...newListing.value,
-    startAt: new Date().toString(),
-    endAt: new Date().toString(),
-  };
-
   const data = await $fetch<any[]>('http://localhost:3001/listings', {
-    body,
+    body: newListing.value,
     method: 'post',
   });
   listings.value.push(data);

@@ -22,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
 import { usePeerStore } from '~~/stores/usePeerStore';
 
 const { $msManager } = useNuxtApp();
