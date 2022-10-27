@@ -8,6 +8,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.7.3",
     "@pinia/nuxt": "^0.4.3",
     "mediasoup-client": "^3.6.57",
     "socket.io-client": "^4.5.2",
@@ -17,11 +18,13 @@
   },
   "devDependencies": {
     "@nuxtjs/eslint-config-typescript": "^11.0.0",
+    "@types/node": "^16.0.0",
     "eslint": "8.25.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-prettier": "^4.2.1",
     "nuxt": "3.0.0-rc.11",
+    "nuxt-icon": "^0.1.7",
     "nuxt-windicss": "^2.5.2",
     "prettier": "^2.7.1"
   }
