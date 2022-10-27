@@ -30,7 +30,7 @@ const { connected } = useSocketConnection();
 
 const ps = usePeerStore();
 
-const localStream = ref<MediaStream | null>(null);
+const localVideoTrack = ref<MediaStreamTrack | null>(null);
 const localVideo = ref(null);
 const readyToProduceVideo = ref<boolean>(false);
 
@@ -39,14 +39,16 @@ const joinRoom: any = async () => {
     audio: true,
     video: true,
   });
+  const videoTrack = stream.getVideoTracks()[0];
+  const audioTrack = stream.getAudioTracks()[0];
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await $msManager.createProducer(stream.getVideoTracks()[0]);
-  await $msManager.createProducer(stream.getAudioTracks()[0]);
+  await $msManager.createProducer(videoTrack);
+  await $msManager.createProducer(audioTrack);
   readyToProduceVideo.value = true;
   await $msManager.joinRoom();
-  localVideo.value.srcObject = stream;
-  localStream.value = stream;
+  localVideo.value.srcObject = new MediaStream([videoTrack]);
+  localVideoTrack.value = videoTrack;
 };
 
 watch(
@@ -61,7 +63,5 @@ watch(
 
 const hasRemotePeer = computed(() => ps.peers.size !== 0);
 
-onUnmounted(() =>
-  localStream.value?.getTracks().forEach((track) => track.stop()),
-);
+onUnmounted(() => localVideoTrack.value?.stop());
 </script>
