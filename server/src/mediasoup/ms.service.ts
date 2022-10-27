@@ -26,7 +26,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       // announcedIp: '192.168.1.127',
-      announcedIp: '172.17.62.152',
+      announcedIp: '172.25.45.172',
     },
   ];
 
@@ -44,7 +44,7 @@ export class MsService {
     setUpObservers();
   }
 
-  async transportSetUp(setUpMode, socketId) {
+  async setupTransport(setUpMode, socketId) {
     const transports = {
       sendTransport:
         setUpMode === 'send' || setUpMode === 'both'
@@ -80,7 +80,7 @@ export class MsService {
     return transport;
   }
 
-  async transportConnect(dtlsParameters: DtlsParameters, transportId: string) {
+  async connectTransport(dtlsParameters: DtlsParameters, transportId: string) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -95,7 +95,7 @@ export class MsService {
     return true;
   }
 
-  async transportProduce(params, transportId, client: Socket) {
+  async produce(params, transportId, client: Socket) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -118,7 +118,6 @@ export class MsService {
     });
 
     producer.observer.on('close', () => {
-      // inform client that consumes the producer (or clients in the room) to close the consumer and make change to the UI
       (this.router.appData.producers as Map<string, Producer>).delete(
         producer.id,
       );
@@ -149,16 +148,12 @@ export class MsService {
       },
     );
 
-    console.log('\n\n\nPRODUCERS:', producers);
-
     const consumers = [];
     producers.forEach(async (producer) => {
       const canConsume = this.router.canConsume({
         producerId: producer.id,
         rtpCapabilities,
       });
-
-      console.log('\n\n\nCanConsume: ', canConsume);
 
       if (!canConsume) return;
 
@@ -227,7 +222,6 @@ export class MsService {
       clientId,
     );
 
-    console.log('new consumer Id: ', consumer.id);
     return {
       id: consumer.id,
       producerId: producerId,
@@ -241,16 +235,8 @@ export class MsService {
       this.router.appData.consumers as Map<string, Consumer>
     ).get(consumerId);
 
-    if (!consumer) {
-      console.log('------------ cannot get consumer ---------------');
-    }
-
     try {
       await consumer.resume();
-      console.log(
-        '----------successfully resume consumer with id of: ',
-        consumer.id,
-      );
     } catch (err) {
       return false;
     }

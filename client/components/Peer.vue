@@ -3,7 +3,7 @@
     ref="video"
     autoplay
     playsinline
-    class="transform rotate-y-180 bg-gray-500"
+    class="transform rotate-y-180 bg-gray-500 w-xs"
   ></video>
 </template>
 <script setup lang="ts">
@@ -13,23 +13,8 @@ const props = defineProps<{
   peer;
 }>();
 
-console.log('the peer here', props.peer);
-
 onMounted(() => {
-  console.log('here');
-  video.value.srcObject = new MediaStream([props.peer.track]);
-  console.log(video.value.srcObject.getVideoTracks()[0]);
+  stream.value.addTrack(props.peer.track);
+  video.value.srcObject = stream.value;
 });
-
-watch(
-  props.peer,
-  (updatedPeer) => {
-    console.log({ updatedPeer });
-    if (props.peer.track) {
-      console.log('got here', props.peer.track);
-      stream.value.addTrack(props.peer.track);
-    }
-  },
-  { immediate: true },
-);
 </script>

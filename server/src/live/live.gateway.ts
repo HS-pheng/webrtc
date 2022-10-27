@@ -37,32 +37,32 @@ export class LiveGateway
     this.msService.closeUserTransports(client.id);
   }
 
-  @SubscribeMessage('transport-setup')
-  async transportSetup(
+  @SubscribeMessage('setup-transport')
+  async setupTransport(
     @MessageBody() body: { setUpMode: string },
     @ConnectedSocket() client,
   ) {
     const { setUpMode } = body;
-    const setUpParams = await this.msService.transportSetUp(
+    const setUpParams = await this.msService.setupTransport(
       setUpMode,
       client.id,
     );
     return setUpParams;
   }
 
-  @SubscribeMessage('transport-connect')
-  async transportConnect(@MessageBody() body): Promise<boolean> {
+  @SubscribeMessage('connect-transport')
+  async connectTransport(@MessageBody() body): Promise<boolean> {
     const { dtlsParameters, transportId } = body;
-    return this.msService.transportConnect(dtlsParameters, transportId);
+    return this.msService.connectTransport(dtlsParameters, transportId);
   }
 
-  @SubscribeMessage('transport-produce')
-  async transportProduce(
+  @SubscribeMessage('produce')
+  async produce(
     @MessageBody() body,
     @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
     const { transportId, ...params } = body;
-    return this.msService.transportProduce(params, transportId, client);
+    return this.msService.produce(params, transportId, client);
   }
 
   @SubscribeMessage('join-room')

@@ -16,15 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { useWebsocket } from '~~/stores/useWebsocket';
-
-const ws = useWebsocket();
-
 const joinRoom: any = () => {
   navigateTo('/room');
 };
-
-onMounted(() => {
-  ws.connect();
-});
 </script>

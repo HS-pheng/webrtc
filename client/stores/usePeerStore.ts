@@ -9,10 +9,10 @@ export const usePeerStore = defineStore('peerStore', () => {
   };
 
   const removePeer = (producerId) => {
-    for (const [key, value] of peers.value) {
-      if (value.producerId === producerId) {
-        value.close();
-        peers.value.delete(key);
+    for (const [consumerId, consumer] of peers.value) {
+      if (consumer.producerId === producerId) {
+        consumer.close();
+        peers.value.delete(consumerId);
       }
     }
   };

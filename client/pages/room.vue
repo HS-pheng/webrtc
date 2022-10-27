@@ -1,39 +1,37 @@
 <template>
-  <div class="flex">
-    <div class="mx-auto flex flex-row">
-      <div class="flex flex-col">
+  <div class="flex m-4">
+    <div class="mx-auto flex flex-row gap-4">
+      <div class="flex flex-col gap-4 border-3">
         <h3 class="text-center">Local video</h3>
         <video
+          v-if="readyToProduceVideo"
           ref="localVideo"
-          class="transform rotate-y-180 bg-gray-500"
+          class="transform rotate-y-180 bg-gray-500 w-xs"
           autoplay
           playsinline
         ></video>
-        <button class="self-center" @click="joinRoom">Join Room</button>
       </div>
-      <div class="flex flex-col">
+      <div v-if="hasRemotePeer" class="flex flex-col gap-4 border-3">
         <h3 class="text-center">Remote video</h3>
-        <Peer v-for="peer in ps.peers" :key="peer.id" :peer="peer" />
+        <div class="flex flex-wrap gap-4">
+          <Peer v-for="[peerId, peer] in ps.peers" :key="peerId" :peer="peer" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import { usePeerStore } from '~~/stores/usePeerStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
-import { SocketPromise } from '~~/utils/socket-promise';
 
 const { $msManager } = useNuxtApp();
 const ws = useWebsocket();
 const ps = usePeerStore();
 
-onMounted(() => {
-  ws.connect();
-  $msManager.socketInit(ws.socket as SocketPromise);
-});
-
 const localVideo = ref(null);
+const readyToProduceVideo = ref<boolean>(false);
 
 const joinRoom: any = async () => {
   const localStream = await navigator.mediaDevices.getUserMedia({
@@ -42,15 +40,24 @@ const joinRoom: any = async () => {
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
   await $msManager.createProducer(localStream.getVideoTracks()[0]);
+  readyToProduceVideo.value = true;
   await $msManager.joinRoom();
   localVideo.value.srcObject = localStream;
 };
-</script>
 
-<style scoped>
-video {
-  width: 320px;
-  background-color: black;
-  filter: grayscale();
-}
-</style>
+onBeforeMount(() => {
+  ws.connect();
+});
+
+watch(
+  () => ws.connected,
+  (connectionStatus) => {
+    if (connectionStatus) {
+      joinRoom();
+    }
+  },
+  { immediate: true },
+);
+
+const hasRemotePeer = computed(() => ps.peers.size !== 0);
+</script>
