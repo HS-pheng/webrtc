@@ -1,0 +1,7 @@
+<template>
+  <div
+    class="mt-10 flex flex-col mx-auto w-full h-full max-w-5xl p-4 border rounded shadow"
+  >
+    <slot />
+  </div>
+</template>

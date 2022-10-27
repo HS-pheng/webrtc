@@ -1,5 +1,7 @@
 <template>
-  <slot />
+  <CommonContainer>
+    <slot />
+  </CommonContainer>
 </template>
 
 <script setup lang="ts"></script>
