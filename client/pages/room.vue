@@ -24,33 +24,33 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import { usePeerStore } from '~~/stores/usePeerStore';
-import { useWebsocket } from '~~/stores/useWebsocket';
 
 const { $msManager } = useNuxtApp();
-const ws = useWebsocket();
+const { connected } = useSocketConnection();
+
 const ps = usePeerStore();
 
+const localStream = ref<MediaStream | null>(null);
 const localVideo = ref(null);
 const readyToProduceVideo = ref<boolean>(false);
 
 const joinRoom: any = async () => {
-  const localStream = await navigator.mediaDevices.getUserMedia({
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: true,
     video: true,
   });
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await $msManager.createProducer(localStream.getVideoTracks()[0]);
+  await $msManager.createProducer(stream.getVideoTracks()[0]);
+  await $msManager.createProducer(stream.getAudioTracks()[0]);
   readyToProduceVideo.value = true;
   await $msManager.joinRoom();
-  localVideo.value.srcObject = localStream;
+  localVideo.value.srcObject = stream;
+  localStream.value = stream;
 };
 
-onBeforeMount(() => {
-  ws.connect();
-});
-
 watch(
-  () => ws.connected,
+  () => connected,
   (connectionStatus) => {
     if (connectionStatus) {
       joinRoom();
@@ -60,4 +60,8 @@ watch(
 );
 
 const hasRemotePeer = computed(() => ps.peers.size !== 0);
+
+onUnmounted(() =>
+  localStream.value?.getTracks().forEach((track) => track.stop()),
+);
 </script>

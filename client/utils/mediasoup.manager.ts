@@ -109,10 +109,9 @@ export class MsManager {
   }
 
   async createProducer(track: MediaStreamTrack) {
-    this.producer = await this.sendTransport.produce({
-      track,
-      ...producerOptions,
-    });
+    const produceData = { track };
+    if (track.kind === 'video') Object.assign(produceData, producerOptions);
+    this.producer = await this.sendTransport.produce(produceData);
   }
 
   createConsumer(params) {
