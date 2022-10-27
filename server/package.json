@@ -8,18 +8,22 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "prebuild && nest build",
-    "dev": "nest start --watch"
+    "dev": "nest start --watch",
+    "typeorm": "ts-node -r tsconfig-paths/register node_modules/typeorm/cli.js"
   },
   "dependencies": {
     "@nestjs/common": "^9.1.4",
     "@nestjs/core": "^9.1.4",
     "@nestjs/platform-express": "^9.1.4",
     "@nestjs/platform-socket.io": "9.1.4",
+    "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.1.4",
     "mediasoup": "^3.10.8",
+    "mysql2": "^2.3.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "typeorm": "^0.3.10"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.1.4",
