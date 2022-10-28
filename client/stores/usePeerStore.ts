@@ -1,23 +1,24 @@
 import { defineStore } from 'pinia';
-import { IPeerTracks } from '~~/constants/types';
+import { IPeerConsumers } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
   // peerId => PeerTracks
-  const peers = ref(new Map<string, IPeerTracks>());
+  const peers = ref(new Map<string, IPeerConsumers>());
 
   const addPeer = (consumer, producerClientId) => {
-    let peerTracks = peers.value.get(producerClientId);
-    if (!peerTracks) {
-      peerTracks = {
-        video: undefined,
-        audio: undefined,
-      };
+    let peerConsumers = peers.value.get(producerClientId);
+    if (!peerConsumers) {
+      peerConsumers = {};
     }
-    peerTracks[consumer.track.kind] = consumer.track;
-    peers.value.set(producerClientId, peerTracks);
+    peerConsumers[`${consumer.track.kind}Consumer`] = consumer;
+    peers.value.set(producerClientId, peerConsumers);
   };
 
   const removePeer = (producerClientId) => {
+    const peerConsumers = peers.value.get(producerClientId);
+    for (const kind in peerConsumers) {
+      peerConsumers[kind].close();
+    }
     peers.value.delete(producerClientId);
   };
 

@@ -13,7 +13,7 @@ export interface ICreateConsumer {
   appData: any;
 }
 
-export interface IPeerTracks {
-  audio?: MediaStreamTrack;
-  video?: MediaStreamTrack;
+export interface IPeerConsumers {
+  audioConsumer?: Consumer;
+  videoConsumer?: Consumer;
 }

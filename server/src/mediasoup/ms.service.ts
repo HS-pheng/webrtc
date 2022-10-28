@@ -1,5 +1,5 @@
 import { workerSettings, mediaCodecs } from '../../config/mediasoup';
-import { Injectable } from '@nestjs/common';
+import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
 import { createWorker } from 'mediasoup';
@@ -26,7 +26,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       // announcedIp: '192.168.1.127',
-      announcedIp: '172.25.45.172',
+      announcedIp: '172.27.45.112',
     },
   ];
 
@@ -205,6 +205,7 @@ export class MsService {
       (this.router.appData.consumers as Map<string, Consumer>).delete(
         consumer.id,
       );
+      console.log('deleted consumer');
     });
 
     (this.router.appData.consumers as Map<string, Consumer>).set(
