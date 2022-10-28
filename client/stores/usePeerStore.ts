@@ -1,20 +1,24 @@
-import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { defineStore } from 'pinia';
+import { IPeerTracks } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
-  const peers = ref(new Map<string, Consumer>());
+  // peerId => PeerTracks
+  const peers = ref(new Map<string, IPeerTracks>());
 
-  const addPeer = (consumer) => {
-    peers.value.set(consumer.id, consumer);
+  const addPeer = (consumer, producerClientId) => {
+    let peerTracks = peers.value.get(producerClientId);
+    if (!peerTracks) {
+      peerTracks = {
+        video: undefined,
+        audio: undefined,
+      };
+    }
+    peerTracks[consumer.track.kind] = consumer.track;
+    peers.value.set(producerClientId, peerTracks);
   };
 
-  const removePeer = (producerId) => {
-    for (const [consumerId, consumer] of peers.value) {
-      if (consumer.producerId === producerId) {
-        consumer.close();
-        peers.value.delete(consumerId);
-      }
-    }
+  const removePeer = (producerClientId) => {
+    peers.value.delete(producerClientId);
   };
 
   return {

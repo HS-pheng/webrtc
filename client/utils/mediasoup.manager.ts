@@ -4,6 +4,7 @@ import { Transport } from 'mediasoup-client/lib/Transport';
 import { usePeerStore } from '../stores/usePeerStore';
 import { SocketPromise } from './socket-promise';
 import { producerOptions } from '~~/constants/config';
+import { ICreateConsumer } from '~~/constants/types';
 
 export class MsManager {
   device: Device | null = null;
@@ -12,7 +13,8 @@ export class MsManager {
   sendTransport: Transport | null = null;
   recvTransport: Transport | null = null;
 
-  producer: Producer | null = null;
+  videoProducer: Producer | null = null;
+  audioProducer: Producer | null = null;
 
   peerStore = null;
 
@@ -100,21 +102,30 @@ export class MsManager {
 
   async joinRoom() {
     const deviceRTPCapabilities = this.device.rtpCapabilities;
-    const peerProducers = await this.socket.request('join-room', {
-      rtpCapabilities: deviceRTPCapabilities,
-      transportId: this.recvTransport.id,
-    });
+    const peerProducers: ICreateConsumer[] = await this.socket.request(
+      'join-room',
+      {
+        rtpCapabilities: deviceRTPCapabilities,
+        transportId: this.recvTransport.id,
+      },
+    );
 
     this.createPeerConsumers(peerProducers);
   }
 
   async createProducer(track: MediaStreamTrack) {
     const produceData = { track };
-    if (track.kind === 'video') Object.assign(produceData, producerOptions);
-    this.producer = await this.sendTransport.produce(produceData);
+
+    if (track.kind === 'audio') {
+      this.audioProducer = await this.sendTransport.produce(produceData);
+      return;
+    }
+
+    Object.assign(produceData, producerOptions);
+    this.videoProducer = await this.sendTransport.produce(produceData);
   }
 
-  createConsumer(params) {
+  createConsumer(params: ICreateConsumer) {
     return this.recvTransport.consume(params);
   }
 
@@ -124,39 +135,46 @@ export class MsManager {
       this.handleNewPeerProducer(producerId);
     });
 
-    this.socket.on('producer-closed', (producerId) => {
-      this.handlePeerProducerClosed(producerId);
+    this.socket.on('producer-closed', (producerClientId) => {
+      this.handlePeerProducerClosed(producerClientId);
     });
   }
 
-  createPeerConsumers(producers) {
-    producers.forEach(async (e) => {
-      const consumer = await this.createConsumer(e);
+  createPeerConsumers(peerProducers: ICreateConsumer[]) {
+    peerProducers.forEach(async (producer) => {
+      const consumer = await this.createConsumer(producer);
+
+      const producerClientId = consumer.appData.producerClientId;
 
       await this.socket.request('resume-consumer', {
-        consumerId: e.id,
+        consumerId: producer.id,
       });
 
-      this.peerStore.addPeer(consumer);
+      this.peerStore.addPeer(consumer, producerClientId);
     });
   }
 
   async handleNewPeerProducer(producerId) {
-    const params = await this.socket.request('get-new-producer', {
-      producerId,
-      rtpCapabilities: this.device.rtpCapabilities,
-      transportId: this.recvTransport.id,
-    });
+    const params: ICreateConsumer = await this.socket.request(
+      'get-new-producer',
+      {
+        producerId,
+        rtpCapabilities: this.device.rtpCapabilities,
+        transportId: this.recvTransport.id,
+      },
+    );
 
     const consumer = await this.createConsumer(params);
+    const producerClientId = consumer.appData.producerClientId;
+
     await this.socket.request('resume-consumer', {
       consumerId: consumer.id,
     });
 
-    this.peerStore.addPeer(consumer);
+    this.peerStore.addPeer(consumer, producerClientId);
   }
 
-  handlePeerProducerClosed(producerId) {
-    this.peerStore.removePeer(producerId);
+  handlePeerProducerClosed(producerClientId) {
+    this.peerStore.removePeer(producerClientId);
   }
 }

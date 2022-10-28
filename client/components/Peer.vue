@@ -10,11 +10,33 @@
 const video = ref<HTMLVideoElement | null>(null);
 const stream = ref<MediaStream>(new MediaStream());
 const props = defineProps<{
-  peer;
+  tracks;
 }>();
 
 onMounted(() => {
-  stream.value.addTrack(props.peer.track);
   video.value.srcObject = stream.value;
 });
+
+const videoTrack = computed(() => props.tracks.video);
+const audioTrack = computed(() => props.tracks.audio);
+
+watch(
+  audioTrack,
+  (newAudioTrack) => {
+    if (newAudioTrack) {
+      stream.value.addTrack(newAudioTrack);
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  videoTrack,
+  (newVideoTrack) => {
+    if (newVideoTrack) {
+      stream.value.addTrack(newVideoTrack);
+    }
+  },
+  { immediate: true },
+);
 </script>

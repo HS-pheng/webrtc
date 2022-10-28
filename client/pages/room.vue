@@ -14,7 +14,11 @@
       <div v-if="hasRemotePeer" class="flex flex-col gap-4 border-3">
         <h3 class="text-center">Remote video</h3>
         <div class="flex flex-wrap gap-4">
-          <Peer v-for="[peerId, peer] in ps.peers" :key="peerId" :peer="peer" />
+          <Peer
+            v-for="[peerId, tracks] in ps.peers"
+            :key="peerId"
+            :tracks="tracks"
+          />
         </div>
       </div>
     </div>
@@ -31,7 +35,7 @@ const ps = usePeerStore();
 
 const localVideoTrack = ref<MediaStreamTrack | null>(null);
 const localVideo = ref(null);
-const readyToProduceVideo = ref<boolean>(false);
+const readyToProduceVideo = ref(false);
 
 const joinRoom: any = async () => {
   const stream = await navigator.mediaDevices.getUserMedia({

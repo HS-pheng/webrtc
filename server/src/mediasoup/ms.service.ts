@@ -121,7 +121,8 @@ export class MsService {
       (this.router.appData.producers as Map<string, Producer>).delete(
         producer.id,
       );
-      this.signalingService.server.emit('producer-closed', producer.id);
+      const producerClientId = producer.appData.uid;
+      this.signalingService.server.emit('producer-closed', producerClientId);
     });
 
     (this.router.appData.producers as Map<string, Producer>).set(
@@ -171,6 +172,7 @@ export class MsService {
             producerId: producer.id,
             kind: consumer.kind,
             rtpParameters: consumer.rtpParameters,
+            appData: consumer.appData,
           });
         }),
       );
@@ -185,11 +187,16 @@ export class MsService {
     rtpCapabilities,
     clientId,
   ) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
+
     const consumer = await transport.consume({
       producerId,
       rtpCapabilities,
       paused: true,
       appData: {
+        producerClientId: producer.appData.uid,
         uid: clientId,
       },
     });
@@ -227,6 +234,7 @@ export class MsService {
       producerId: producerId,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
+      appData: consumer.appData,
     };
   }
 
