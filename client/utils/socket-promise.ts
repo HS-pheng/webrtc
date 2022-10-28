@@ -21,16 +21,5 @@ export function makeSocketPromise(
       });
     });
   };
-  socketPromise.listen = (
-    endpoint: string,
-    timeout: number = requestTimeout,
-  ) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => reject(new Error('Timeout!')), timeout);
-      socket.on(endpoint, (res) => {
-        resolve(res);
-      });
-    });
-  };
   return socketPromise;
 }

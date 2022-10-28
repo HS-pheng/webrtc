@@ -1,4 +1,4 @@
-import { workerSettings, mediaCodecs } from './../../config/mediasoup';
+import { workerSettings, mediaCodecs } from '../../config/mediasoup';
 import { Injectable } from '@nestjs/common';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
@@ -13,6 +13,7 @@ import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
 import { SignalingService } from 'src/signaling/signaling.service';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class MsService {
@@ -25,7 +26,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       // announcedIp: '192.168.1.127',
-      announcedIp: '172.17.62.152',
+      announcedIp: '172.25.45.172',
     },
   ];
 
@@ -43,7 +44,7 @@ export class MsService {
     setUpObservers();
   }
 
-  async transportSetUp(setUpMode, socketId) {
+  async setupTransport(setUpMode, socketId) {
     const transports = {
       sendTransport:
         setUpMode === 'send' || setUpMode === 'both'
@@ -79,7 +80,7 @@ export class MsService {
     return transport;
   }
 
-  async transportConnect(dtlsParameters: DtlsParameters, transportId: string) {
+  async connectTransport(dtlsParameters: DtlsParameters, transportId: string) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -94,14 +95,21 @@ export class MsService {
     return true;
   }
 
-  async transportProduce(params, transportId) {
+  async produce(params, transportId, client: Socket) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
 
     if (!transport) return null;
 
-    const producer = await transport.produce({
+    const producer = await this.createProducer(params, transport);
+    client.broadcast.emit('new-producer', producer.id);
+
+    return producer.id;
+  }
+
+  async createProducer(params, transport) {
+    const producer: Producer = await transport.produce({
       kind: params.kind,
       rtpParameters: params.rtpParameters,
       appData: {
@@ -110,11 +118,11 @@ export class MsService {
     });
 
     producer.observer.on('close', () => {
-      // inform client that consumes the producer (or clients in the room) to close the consumer and make change to the UI
       (this.router.appData.producers as Map<string, Producer>).delete(
         producer.id,
       );
-      this.signalingService.server.emit('producer-closed', {});
+      const producerClientId = producer.appData.uid;
+      this.signalingService.server.emit('producer-closed', producerClientId);
     });
 
     (this.router.appData.producers as Map<string, Producer>).set(
@@ -122,33 +130,81 @@ export class MsService {
       producer,
     );
 
-    return producer.id;
+    return producer;
   }
 
-  async joinRoom(rtpCapabilities: RtpCapabilities, transportId: string) {
+  async joinRoom(
+    rtpCapabilities: RtpCapabilities,
+    transportId: string,
+    clientId: string,
+  ) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
 
-    // to avoid using the previously unclosed producers -- for temporary dev only, because multiparty call is not supported yet
-    // it suppose to response with an array of consumers for each producers in the router
     const producers = [];
-    (this.router.appData.producers as Map<string, Producer>).forEach((val) =>
-      producers.push(val),
+    (this.router.appData.producers as Map<string, Producer>).forEach(
+      (producer) => {
+        if (producer.appData.uid !== clientId) producers.push(producer);
+      },
     );
-    const producer = producers[producers.length - 1];
 
-    const canConsume = this.router.canConsume({
-      producerId: producer.id,
-      rtpCapabilities,
+    const consumers = [];
+    producers.forEach(async (producer) => {
+      const canConsume = this.router.canConsume({
+        producerId: producer.id,
+        rtpCapabilities,
+      });
+
+      if (!canConsume) return;
+
+      consumers.push(
+        new Promise(async (resolve) => {
+          const consumer = await this.createConsumer(
+            producer.id,
+            transport,
+            rtpCapabilities,
+            clientId,
+          );
+
+          resolve({
+            id: consumer.id,
+            producerId: producer.id,
+            kind: consumer.kind,
+            rtpParameters: consumer.rtpParameters,
+            appData: consumer.appData,
+          });
+        }),
+      );
     });
 
-    if (!canConsume) return null;
+    return await Promise.all(consumers);
+  }
+
+  async createConsumer(
+    producerId: string,
+    transport: WebRtcTransport,
+    rtpCapabilities,
+    clientId,
+  ) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
 
     const consumer = await transport.consume({
-      producerId: producer.id,
+      producerId,
       rtpCapabilities,
       paused: true,
+      appData: {
+        producerClientId: producer.appData.uid,
+        uid: clientId,
+      },
+    });
+
+    consumer.observer.on('close', () => {
+      (this.router.appData.consumers as Map<string, Consumer>).delete(
+        consumer.id,
+      );
     });
 
     (this.router.appData.consumers as Map<string, Consumer>).set(
@@ -156,11 +212,29 @@ export class MsService {
       consumer,
     );
 
+    return consumer;
+  }
+
+  async getNewProducer(producerId, transportId, rtpCapabilities, clientId) {
+    const transport = (
+      this.router.appData.transports as Map<string, WebRtcTransport>
+    ).get(transportId);
+
+    if (!transport) return null;
+
+    const consumer = await this.createConsumer(
+      producerId,
+      transport,
+      rtpCapabilities,
+      clientId,
+    );
+
     return {
       id: consumer.id,
-      producerId: producer.id,
+      producerId: producerId,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
+      appData: consumer.appData,
     };
   }
 

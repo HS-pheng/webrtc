@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { SignalingService } from '../signaling/signaling.service';
 import { Socket, Server } from 'socket.io';
-import { MsService } from 'src/plugin/ms.service';
+import { MsService } from 'src/mediasoup/ms.service';
 
 @WebSocketGateway({
   cors: {
@@ -37,38 +37,49 @@ export class LiveGateway
     this.msService.closeUserTransports(client.id);
   }
 
-  @SubscribeMessage('transport-setup')
-  async transportSetup(
+  @SubscribeMessage('setup-transport')
+  async setupTransport(
     @MessageBody() body: { setUpMode: string },
     @ConnectedSocket() client,
   ) {
     const { setUpMode } = body;
-    const setUpParams = await this.msService.transportSetUp(
+    const setUpParams = await this.msService.setupTransport(
       setUpMode,
       client.id,
     );
     return setUpParams;
   }
 
-  @SubscribeMessage('transport-connect')
-  async transportConnect(@MessageBody() body): Promise<boolean> {
+  @SubscribeMessage('connect-transport')
+  async connectTransport(@MessageBody() body): Promise<boolean> {
     const { dtlsParameters, transportId } = body;
-    return this.msService.transportConnect(dtlsParameters, transportId);
+    return this.msService.connectTransport(dtlsParameters, transportId);
   }
 
-  @SubscribeMessage('transport-produce')
-  async transportProduce(
+  @SubscribeMessage('produce')
+  async produce(
     @MessageBody() body,
-    @ConnectedSocket() client,
+    @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
     const { transportId, ...params } = body;
-    return this.msService.transportProduce(params, transportId);
+    return this.msService.produce(params, transportId, client);
   }
 
-  @SubscribeMessage('consume')
-  async transportConsume(@MessageBody() body) {
+  @SubscribeMessage('join-room')
+  async transportConsume(@MessageBody() body, @ConnectedSocket() client) {
     const { rtpCapabilities, transportId } = body;
-    return this.msService.joinRoom(rtpCapabilities, transportId);
+    return this.msService.joinRoom(rtpCapabilities, transportId, client.id);
+  }
+
+  @SubscribeMessage('get-new-producer')
+  async getNewProducer(@MessageBody() body, @ConnectedSocket() client) {
+    const { producerId, rtpCapabilities, transportId } = body;
+    return this.msService.getNewProducer(
+      producerId,
+      transportId,
+      rtpCapabilities,
+      client.id,
+    );
   }
 
   @SubscribeMessage('resume-consumer')
