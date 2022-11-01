@@ -5,10 +5,10 @@
       <input class="border-2" />
     </div>
     <div class="flex gap-4">
-      <button class="p-2 border-2 w-50" @click="joinRoom">
+      <button class="p-2 border-2 w-50" @click="joinAsInterviewer">
         Join Room as an Interviewer
       </button>
-      <button class="p-2 border-2 w-50" @click="joinRoom">
+      <button class="p-2 border-2 w-50" @click="joinAsCandidate">
         Join Room as a Candidate
       </button>
     </div>
@@ -16,7 +16,11 @@
 </template>
 
 <script setup lang="ts">
-const joinRoom: any = () => {
-  navigateTo('/room');
+const joinAsInterviewer: any = () => {
+  navigateTo('/room/interview');
+};
+
+const joinAsCandidate: any = () => {
+  navigateTo('/room/wait');
 };
 </script>

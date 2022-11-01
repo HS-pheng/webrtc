@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { IPeerConsumers } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
-  // peerId => PeerTracks
   const peers = ref(new Map<string, IPeerConsumers>());
 
   const addPeer = (consumer, producerClientId) => {

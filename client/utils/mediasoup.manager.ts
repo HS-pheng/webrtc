@@ -103,7 +103,7 @@ export class MsManager {
   async joinRoom() {
     const deviceRTPCapabilities = this.device.rtpCapabilities;
     const peerProducers: ICreateConsumer[] = await this.socket.request(
-      'join-room',
+      'join-interview-room',
       {
         rtpCapabilities: deviceRTPCapabilities,
         transportId: this.recvTransport.id,
@@ -176,5 +176,10 @@ export class MsManager {
 
   handlePeerProducerClosed(producerClientId) {
     this.peerStore.removePeer(producerClientId);
+  }
+
+  closeTransports() {
+    this.sendTransport?.close();
+    this.recvTransport?.close();
   }
 }

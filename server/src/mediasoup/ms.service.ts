@@ -1,5 +1,5 @@
 import { workerSettings, mediaCodecs } from '../../config/mediasoup';
-import { ConsoleLogger, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
 import { createWorker } from 'mediasoup';
@@ -12,13 +12,9 @@ import { Producer } from 'mediasoup/node/lib/Producer';
 import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
-import { SignalingService } from 'src/signaling/signaling.service';
-import { Socket } from 'socket.io';
 
 @Injectable()
 export class MsService {
-  constructor(private signalingService: SignalingService) {}
-
   private worker: Worker = null;
   private router: Router = null;
 
@@ -26,7 +22,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       // announcedIp: '192.168.1.127',
-      announcedIp: '172.27.45.112',
+      announcedIp: '172.31.193.85',
     },
   ];
 
@@ -95,7 +91,7 @@ export class MsService {
     return true;
   }
 
-  async produce(params, transportId, client: Socket) {
+  async produce(params, transportId) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -103,8 +99,6 @@ export class MsService {
     if (!transport) return null;
 
     const producer = await this.createProducer(params, transport);
-    client.broadcast.emit('new-producer', producer.id);
-
     return producer.id;
   }
 
@@ -121,8 +115,6 @@ export class MsService {
       (this.router.appData.producers as Map<string, Producer>).delete(
         producer.id,
       );
-      const producerClientId = producer.appData.uid;
-      this.signalingService.server.emit('producer-closed', producerClientId);
     });
 
     (this.router.appData.producers as Map<string, Producer>).set(
@@ -205,7 +197,6 @@ export class MsService {
       (this.router.appData.consumers as Map<string, Consumer>).delete(
         consumer.id,
       );
-      console.log('deleted consumer');
     });
 
     (this.router.appData.consumers as Map<string, Consumer>).set(
