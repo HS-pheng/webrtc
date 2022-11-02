@@ -1,21 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
+import { interviewerGroup, candidateGroup } from './socket.constant';
 
 @Injectable() // change name to socketService
 export class SocketService {
   server: Server;
-  interviewRoom = 'interview-room';
-  interviewerGroup = 'interview-group';
-  candidateGroup = 'candidate-group';
 
   injectServer(server: Server) {
     this.server = server;
-  }
-
-  async findSocketsByRoom(roomId: string): Promise<string[]> {
-    const sockets = await this.server.in(roomId).fetchSockets();
-    const socketIds = sockets.map((socket) => socket.id);
-    return socketIds;
   }
 
   send<T>(roomId: string, eventName: string, payload: T): void {
@@ -28,20 +20,8 @@ export class SocketService {
     );
   }
 
-  joinInterviewerGroup(client) {
-    client.join(this.interviewerGroup);
-  }
-
-  joinCandidateGroup(client) {
-    client.join(this.candidateGroup);
-  }
-
-  joinInterviewRoom(client) {
-    client.join(this.interviewRoom);
-  }
-
   broadcastToInterviewerGroup(eventName: string, payload = {}) {
-    this.server.in(this.interviewerGroup).emit(eventName, payload);
+    this.server.in(interviewerGroup).emit(eventName, payload);
   }
 
   toCandidate(clientId, eventName, payload = {}) {
@@ -51,7 +31,7 @@ export class SocketService {
   async updateCandidateStatistics(candidateList) {
     const candidateListSize = candidateList.length;
     const candidateSockets = await this.server
-      .in(this.candidateGroup)
+      .in(candidateGroup)
       .fetchSockets();
     candidateSockets.forEach((socket) => {
       const listNumber = candidateList.indexOf(socket.id) + 1;

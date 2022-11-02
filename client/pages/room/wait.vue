@@ -17,7 +17,7 @@ const waitingStore = useWaitingStore();
 const { connected } = useSocketConnection();
 
 const joinWaitRoom = () => {
-  interviewManager.joinCandidateGroup();
+  interviewManager.joinGroup('candidate');
 };
 
 const candidateListNumber = computed(() => waitingStore.stats?.listNumber);

@@ -93,14 +93,21 @@ export class Queue<T> {
     this.content.push(e);
   }
 
-  pop() {
+  remove(e: T) {
+    const index = this.content.indexOf(e);
+    if (index >= 0) {
+      this.content.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  shift() {
     this.content.shift();
   }
 
   front() {
-    const frontElement = this.content[0];
-    if (!frontElement) return null;
-    return frontElement;
+    return this.content[0] || null;
   }
 
   back() {
@@ -109,14 +116,5 @@ export class Queue<T> {
 
   size() {
     return this.content.length;
-  }
-
-  remove(name) {
-    const index = this.content.indexOf(name);
-    if (index >= 0) {
-      this.content.splice(index, 1);
-      return true;
-    }
-    return false;
   }
 }

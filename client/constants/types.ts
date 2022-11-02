@@ -17,3 +17,8 @@ export interface IPeerConsumers {
   audioConsumer?: Consumer;
   videoConsumer?: Consumer;
 }
+
+export interface candidateStats {
+  listNumber: string;
+  candidateListSize: string;
+}

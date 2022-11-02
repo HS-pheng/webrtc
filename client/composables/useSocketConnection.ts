@@ -33,11 +33,9 @@ export function useSocketConnection() {
       candidateStore.remove(name);
     });
 
-    socket.value.on('next-candidate', (success) => {
-      if (success) {
-        candidateStore.currentCandidate = candidateStore.front();
-        candidateStore.pop();
-      }
+    socket.value.on('next-candidate', () => {
+      candidateStore.currentCandidate = candidateStore.front();
+      candidateStore.shift();
     });
   }
 

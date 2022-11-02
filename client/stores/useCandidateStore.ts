@@ -4,26 +4,26 @@ export const useCandidateStore = defineStore('candidateStore', () => {
   const candidateList = ref<string[]>([]);
   const currentCandidate = ref<string>();
 
-  const init = (candidates) => {
+  const init = (candidates: string[]) => {
     console.log(candidates);
     candidateList.value = candidates;
   };
 
-  const push = (newCandidate) => {
+  const push = (newCandidate: string) => {
     candidateList.value.push(newCandidate);
   };
 
-  const remove = (name) => {
-    const index = candidateList.value.indexOf(name);
+  const remove = (candidate: string) => {
+    const index = candidateList.value.indexOf(candidate);
     if (index >= 0) {
       candidateList.value.splice(index, 1);
     }
-    if (name === currentCandidate.value) {
+    if (candidate === currentCandidate.value) {
       currentCandidate.value = '';
     }
   };
 
-  const pop = () => {
+  const shift = () => {
     candidateList.value.shift();
   };
 
@@ -37,7 +37,7 @@ export const useCandidateStore = defineStore('candidateStore', () => {
     init,
     push,
     remove,
-    pop,
+    shift,
     front,
   };
 });

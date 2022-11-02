@@ -10,12 +10,12 @@ export class InterviewService {
     return this.waitingList.content;
   }
 
-  addToWaitingList(name: string) {
-    this.waitingList.push(name);
+  addToWaitingList(clientId: string) {
+    this.waitingList.push(clientId);
     return this.waitingList.content;
   }
 
-  removeCandidate(clientId) {
+  removeCandidate(clientId: string) {
     return this.waitingList.remove(clientId);
   }
 
@@ -24,4 +24,5 @@ export class InterviewService {
   }
 
   // isCandidate, isInterviewer
+  // role: keep track of waitingList
 }

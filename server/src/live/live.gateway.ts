@@ -11,6 +11,8 @@ import { SocketService } from '../socket/socket.service';
 import { Socket, Server } from 'socket.io';
 import { MsService } from 'src/mediasoup/ms.service';
 import { InterviewService } from 'src/interview/interview.service';
+import { interviewerGroup, candidateGroup } from 'src/socket/socket.constant';
+import { LiveService } from './live.service';
 
 @WebSocketGateway({
   cors: {
@@ -24,6 +26,7 @@ export class LiveGateway
     private readonly socketService: SocketService,
     private readonly msService: MsService,
     private readonly interviewService: InterviewService,
+    private readonly liveService: LiveService,
   ) {}
 
   afterInit(server: Server) {
@@ -36,70 +39,32 @@ export class LiveGateway
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
     console.log('This client just disconnected: ', client.id);
-    this.msService.closeUserTransports(client.id);
-    client.broadcast.emit('producer-closed', client.id);
-
-    this.interviewService.removeCandidate(client.id);
-    this.socketService.broadcastToInterviewerGroup(
-      'candidate-closed',
-      client.id,
-    );
-
-    this.socketService.updateCandidateStatistics(
-      this.interviewService.getWaitingList(),
-    );
+    this.liveService.msDisconnectionCleanup(client);
+    this.liveService.interviewDisconnectionCleanup(client);
   }
 
   // ---------- interview endpoints --------------
 
   @SubscribeMessage('join-interviewer-group')
   async joinInterviewerGroup(@ConnectedSocket() client: Socket) {
-    this.socketService.joinInterviewerGroup(client);
+    client.join(interviewerGroup);
   }
 
   @SubscribeMessage('join-candidate-group')
   handleNewCandidate(@ConnectedSocket() client: Socket) {
     this.interviewService.addToWaitingList(client.id);
-    this.socketService.joinCandidateGroup(client);
-
-    // inform new-candidate statistics to every candidate in candidate-group
-    const updatedCandidateList = this.interviewService.getWaitingList();
-    this.socketService.updateCandidateStatistics(updatedCandidateList);
-
-    this.socketService.broadcastToInterviewerGroup('new-candidate', client.id);
+    client.join(candidateGroup);
+    this.liveService.announceNewCandidate(client);
   }
 
   @SubscribeMessage('next-candidate')
-  async handleBeginInterviewRequest() {
+  async handleNextCandidateRequest() {
     const nextCandidate = this.interviewService.getNextCandidate();
-    let readyToBegin = false;
 
-    const previousClient = (
-      await this.socketService.findSocketById(
-        this.interviewService.previousCandidate,
-      )
-    )?.[0];
-    if (previousClient) {
-      this.msService.closeUserTransports(previousClient.id);
-      this.socketService.server.emit('producer-closed', previousClient.id);
-      this.socketService.toCandidate(previousClient.id, 'interview-finished');
-    }
+    this.liveService.removePreviousCandidate();
 
-    if (nextCandidate) {
-      readyToBegin = true;
-
-      this.interviewService.previousCandidate = nextCandidate;
-      this.interviewService.removeCandidate(nextCandidate);
-      this.socketService.updateCandidateStatistics(
-        this.interviewService.getWaitingList(),
-      );
-
-      this.socketService.toCandidate(nextCandidate, 'ready-for-interview');
-    }
-    this.socketService.broadcastToInterviewerGroup(
-      'next-candidate',
-      readyToBegin,
-    );
+    nextCandidate &&
+      this.liveService.announceMovingToNextCandidate(nextCandidate);
   }
 
   @SubscribeMessage('get-candidate-list')
