@@ -17,9 +17,14 @@ export function useInterviewManager() {
     } else socketStore.socket.emit('join-candidate-group');
   };
 
+  const leaveWaitingList = () => {
+    socketStore.socket.emit('leave-waiting-list');
+  };
+
   return {
     requestNextCandidate,
     getCandidateList,
     joinGroup,
+    leaveWaitingList,
   };
 }

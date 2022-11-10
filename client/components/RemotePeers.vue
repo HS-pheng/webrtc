@@ -22,6 +22,6 @@ const extractTracks = (consumers) => {
     const trackKind = consumers[consumerKind].track.kind;
     tracks[trackKind] = consumers[consumerKind].track;
   }
-  return tracks;
+  return tracks as { video: MediaStreamTrack; audio: MediaStreamTrack };
 };
 </script>

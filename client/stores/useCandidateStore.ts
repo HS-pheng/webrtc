@@ -18,9 +18,6 @@ export const useCandidateStore = defineStore('candidateStore', () => {
     if (index >= 0) {
       candidateList.value.splice(index, 1);
     }
-    if (candidate === currentCandidate.value) {
-      currentCandidate.value = '';
-    }
   };
 
   const shift = () => {
@@ -31,6 +28,14 @@ export const useCandidateStore = defineStore('candidateStore', () => {
     return candidateList.value[0];
   };
 
+  const size = () => {
+    return candidateList.value.length;
+  };
+
+  const removeCurrentCandidate = () => {
+    currentCandidate.value = '';
+  };
+
   return {
     candidateList,
     currentCandidate,
@@ -39,5 +44,7 @@ export const useCandidateStore = defineStore('candidateStore', () => {
     remove,
     shift,
     front,
+    size,
+    removeCurrentCandidate,
   };
 });

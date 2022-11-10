@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { interviewerGroup, candidateGroup } from './socket.constant';
+import { candidateGroup } from './socket.constant';
 
 @Injectable() // change name to socketService
 export class SocketService {
@@ -10,7 +10,7 @@ export class SocketService {
     this.server = server;
   }
 
-  send<T>(roomId: string, eventName: string, payload: T): void {
+  send(roomId: string, eventName: string, payload = {}): void {
     this.server.in(roomId).emit(eventName, payload);
   }
 
@@ -20,14 +20,6 @@ export class SocketService {
     );
   }
 
-  broadcastToInterviewerGroup(eventName: string, payload = {}) {
-    this.server.in(interviewerGroup).emit(eventName, payload);
-  }
-
-  toCandidate(clientId, eventName, payload = {}) {
-    this.server.to(clientId).emit(eventName, payload);
-  }
-
   async updateCandidateStatistics(candidateList) {
     const candidateListSize = candidateList.length;
     const candidateSockets = await this.server
@@ -35,13 +27,13 @@ export class SocketService {
       .fetchSockets();
     candidateSockets.forEach((socket) => {
       const listNumber = candidateList.indexOf(socket.id) + 1;
-      this.toCandidate(socket.id, 'candidate-statistic', {
+      console.log(
+        `list number ${listNumber}...list size: ${candidateListSize}`,
+      );
+      this.send(socket.id, 'candidate-statistic', {
         listNumber,
         candidateListSize,
       });
     });
   }
-
-  // emitProducerClosed, emitNewProducer, broadcastToInterviewRoom, broadcastToWaitingRoom, broadcastToCandidateGroup
-  // broadcastToInterviewerGroup
 }

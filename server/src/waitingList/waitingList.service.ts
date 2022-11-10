@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'src/utils/utils';
 
 @Injectable()
-export class InterviewService {
+export class WaitingListService {
   waitingList = new Queue<string>();
-  previousCandidate = null;
+  currentCandidate: string = null;
 
   getWaitingList() {
     return this.waitingList.content;
@@ -16,13 +16,11 @@ export class InterviewService {
   }
 
   removeCandidate(clientId: string) {
+    console.log('removed candidate from the list');
     return this.waitingList.remove(clientId);
   }
 
   getNextCandidate() {
     return this.waitingList.front();
   }
-
-  // isCandidate, isInterviewer
-  // role: keep track of waitingList
 }

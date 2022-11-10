@@ -24,4 +24,5 @@ const candidateListNumber = computed(() => waitingStore.stats?.listNumber);
 const candidateListSize = computed(() => waitingStore.stats?.candidateListSize);
 
 whenever(connected, joinWaitRoom, { immediate: true });
+onUnmounted(() => interviewManager.leaveWaitingList());
 </script>

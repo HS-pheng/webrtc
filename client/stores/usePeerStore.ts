@@ -21,9 +21,20 @@ export const usePeerStore = defineStore('peerStore', () => {
     peers.value.delete(producerClientId);
   };
 
+  const destroyPeers = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [peerId, consumer] of peers.value) {
+      for (const kind in consumer) {
+        consumer[kind].close();
+      }
+    }
+    peers.value = new Map<string, IPeerConsumers>();
+  };
+
   return {
     peers,
     addPeer,
     removePeer,
+    destroyPeers,
   };
 });

@@ -17,10 +17,15 @@
 
 <script setup lang="ts">
 const joinAsInterviewer: any = () => {
-  navigateTo('/room/interview');
+  return navigateTo({
+    path: '/room/interview',
+    query: {
+      interviewer: 'true',
+    },
+  });
 };
 
 const joinAsCandidate: any = () => {
-  navigateTo('/room/wait');
+  return navigateTo('/room/wait');
 };
 </script>

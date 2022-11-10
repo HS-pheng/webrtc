@@ -22,7 +22,7 @@ export class MsService {
     {
       ip: '0.0.0.0',
       // announcedIp: '192.168.1.127',
-      announcedIp: '172.31.193.85',
+      announcedIp: '172.23.220.210',
     },
   ];
 

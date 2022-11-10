@@ -10,7 +10,7 @@ import {
 import { SocketService } from '../socket/socket.service';
 import { Socket, Server } from 'socket.io';
 import { MsService } from 'src/mediasoup/ms.service';
-import { InterviewService } from 'src/interview/interview.service';
+import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { interviewerGroup, candidateGroup } from 'src/socket/socket.constant';
 import { LiveService } from './live.service';
 
@@ -25,7 +25,7 @@ export class LiveGateway
   constructor(
     private readonly socketService: SocketService,
     private readonly msService: MsService,
-    private readonly interviewService: InterviewService,
+    private readonly waitingListService: WaitingListService,
     private readonly liveService: LiveService,
   ) {}
 
@@ -34,11 +34,11 @@ export class LiveGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just connected: ', client.id);
+    console.log('This client just connected:', client.id);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just disconnected: ', client.id);
+    console.log('This client just disconnected:', client.id);
     this.liveService.msDisconnectionCleanup(client);
     this.liveService.interviewDisconnectionCleanup(client);
   }
@@ -51,25 +51,35 @@ export class LiveGateway
   }
 
   @SubscribeMessage('join-candidate-group')
-  handleNewCandidate(@ConnectedSocket() client: Socket) {
-    this.interviewService.addToWaitingList(client.id);
-    client.join(candidateGroup);
-    this.liveService.announceNewCandidate(client);
+  async handleNewCandidate(@ConnectedSocket() client: Socket) {
+    this.waitingListService.addToWaitingList(client.id);
+    await client.join(candidateGroup);
+    await this.liveService.announceNewCandidate(client);
   }
 
   @SubscribeMessage('next-candidate')
   async handleNextCandidateRequest() {
-    const nextCandidate = this.interviewService.getNextCandidate();
+    const nextCandidate = this.waitingListService.getNextCandidate();
 
-    this.liveService.removePreviousCandidate();
+    this.liveService.removeCurrentCandidate();
 
-    nextCandidate &&
-      this.liveService.announceMovingToNextCandidate(nextCandidate);
+    nextCandidate
+      ? this.liveService.announceMovingToNextCandidate(nextCandidate)
+      : this.socketService.send(interviewerGroup, 'no-candidate');
   }
 
   @SubscribeMessage('get-candidate-list')
   getCandidateList() {
-    return this.interviewService.getWaitingList();
+    return this.waitingListService.getWaitingList();
+  }
+
+  @SubscribeMessage('leave-waiting-list')
+  removeFromWaitingList(@ConnectedSocket() client: Socket) {
+    this.waitingListService.removeCandidate(client.id);
+    this.socketService.updateCandidateStatistics(
+      this.waitingListService.getWaitingList(),
+    );
+    this.socketService.send(interviewerGroup, 'remove-from-waiting', client.id);
   }
 
   // ---------- mediasoup endpoints --------------
@@ -100,7 +110,13 @@ export class LiveGateway
   ): Promise<string | null> {
     const { transportId, ...params } = body;
     const producerId = await this.msService.produce(params, transportId);
-    client.broadcast.emit('new-producer', producerId);
+
+    const currentCandidate = this.waitingListService.currentCandidate;
+    client
+      .to(interviewerGroup)
+      .to(currentCandidate)
+      .emit('new-producer', producerId);
+
     return producerId;
   }
 

@@ -13,14 +13,17 @@
 const props = defineProps<{ videoTrack: MediaStreamTrack }>();
 
 const localVideo = ref<HTMLVideoElement | null>(null);
-const localStream = ref<MediaStream>(new MediaStream());
+const localStream = ref<MediaStream | null>(null);
+const videoTrack = computed(() => props.videoTrack);
 
 onMounted(() => {
+  localStream.value = new MediaStream();
   localVideo.value.srcObject = localStream.value;
 });
 
-watch(
-  () => props.videoTrack,
-  () => localStream.value.addTrack(props.videoTrack),
-);
+watchEffect(() => {
+  if (localStream.value && videoTrack.value) {
+    localStream.value.addTrack(videoTrack.value);
+  }
+});
 </script>
