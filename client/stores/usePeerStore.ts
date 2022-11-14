@@ -1,29 +1,33 @@
+import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { defineStore } from 'pinia';
-import { IPeerConsumers } from '~~/constants/types';
+import { IPeer } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
-  const peers = ref(new Map<string, IPeerConsumers>());
+  const peers = ref(new Map<string, IPeer>());
 
-  const addPeer = (consumer, producerClientId) => {
-    let peerConsumers = peers.value.get(producerClientId);
-    if (!peerConsumers) {
-      peerConsumers = [];
+  const addPeer = (consumer: Consumer, name: string, peerId: string) => {
+    let peer = peers.value.get(peerId);
+    if (!peer) {
+      peer = {};
+      peer.consumers = [];
     }
-    peerConsumers.push(consumer);
-    peers.value.set(producerClientId, peerConsumers);
+    peer.consumers.push(consumer);
+    peer.username = name;
+    peers.value.set(peerId, peer);
   };
 
   const removePeer = (producerClientId) => {
-    const peerConsumers = peers.value.get(producerClientId);
-    peerConsumers && peerConsumers.forEach((consumer) => consumer.close());
+    const peer = peers.value.get(producerClientId);
+    peer?.consumers && peer.consumers.forEach((consumer) => consumer.close());
     peers.value.delete(producerClientId);
   };
 
   const destroyPeers = () => {
-    for (const [, peerConsumers] of peers.value) {
-      peerConsumers.forEach((consumer) => consumer.close());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [peerId, peer] of peers.value) {
+      peer.consumers.forEach((consumer) => consumer.close());
     }
-    peers.value = new Map<string, IPeerConsumers>();
+    peers.value = new Map<string, IPeer>();
   };
 
   return {

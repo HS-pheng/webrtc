@@ -1,4 +1,5 @@
 import { useCandidateStore } from '~~/stores/useCandidateStore';
+import { useUserInfo } from '~~/stores/useUserInfo';
 import { useWaitingStore } from '~~/stores/useWaitingStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
 import { CommunicationEvents, BusEvents } from '~~/constants/socketEvents';
@@ -10,13 +11,14 @@ export function useSocketConnection() {
   const connected = ref(socketStore.connected);
   const candidateStore = useCandidateStore();
   const waitingStore = useWaitingStore();
+  const userInfo = useUserInfo();
   const { $msManager } = useNuxtApp();
 
   tryOnMounted(() => {
     if (!connected.value) {
       socket.value?.disconnect();
 
-      socketStore.connect();
+      socketStore.connect(userInfo);
       socketStore.socket.on('connect', () => {
         connected.value = true;
       });
@@ -33,6 +35,7 @@ export function useSocketConnection() {
     });
 
     socket.value.on(CommunicationEvents.CANDIDATE_CLOSED, (uid: string) => {
+      console.log('candidate closed');
       candidateStore.remove(uid);
       if (uid === candidateStore.currentCandidate)
         candidateStore.removeCurrentCandidate();
@@ -78,5 +81,5 @@ export function useSocketConnection() {
     socket.value.disconnect();
   }
 
-  return { socket, connected, disconnectSocket };
+  return { socket, disconnectSocket, connected };
 }

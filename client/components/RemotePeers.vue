@@ -3,9 +3,10 @@
     <h3 class="text-center">Remote video</h3>
     <div class="flex flex-wrap gap-4">
       <Peer
-        v-for="[peerId, consumers] in ps.peers"
+        v-for="[peerId, peer] in ps.peers"
         :key="peerId"
-        :tracks="extractTracks(consumers)"
+        :tracks="extractTracks(peer.consumers)"
+        :username="peer.username"
       />
     </div>
   </div>

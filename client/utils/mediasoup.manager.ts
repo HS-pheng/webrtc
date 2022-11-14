@@ -136,6 +136,7 @@ export class MsManager {
     });
 
     this.socket.on('producer-closed', (producerClientId) => {
+      console.log('got here');
       this.handlePeerProducerClosed(producerClientId);
     });
   }
@@ -143,14 +144,14 @@ export class MsManager {
   createPeerConsumers(peerProducers: ICreateConsumer[]) {
     peerProducers.forEach(async (producer) => {
       const consumer = await this.createConsumer(producer);
-
-      const producerClientId = consumer.appData.producerClientId;
+      const producerUsername = consumer.appData.producerUsername as string;
+      const producerClientId = consumer.appData.producerClientId as string;
 
       await this.socket.request('resume-consumer', {
         consumerId: producer.id,
       });
 
-      this.peerStore.addPeer(consumer, producerClientId);
+      this.peerStore.addPeer(consumer, producerUsername, producerClientId);
     });
   }
 
@@ -165,13 +166,14 @@ export class MsManager {
     );
 
     const consumer = await this.createConsumer(params);
+    const producerUsername = consumer.appData.producerUsername;
     const producerClientId = consumer.appData.producerClientId;
 
     await this.socket.request('resume-consumer', {
       consumerId: consumer.id,
     });
 
-    this.peerStore.addPeer(consumer, producerClientId);
+    this.peerStore.addPeer(consumer, producerUsername, producerClientId);
   }
 
   handlePeerProducerClosed(producerClientId) {

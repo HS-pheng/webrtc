@@ -36,7 +36,8 @@ export class LiveGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just connected:', client.id);
+    client.data.username = client.handshake.query.name;
+    console.log('This client just connected: ', client.data.username);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
@@ -66,6 +67,7 @@ export class LiveGateway
 
     this.liveService.removeCurrentCandidate();
 
+    console.log('next candidate', nextCandidate);
     nextCandidate
       ? this.liveService.announceMovingToNextCandidate(nextCandidate)
       : this.socketService.send(
@@ -102,10 +104,7 @@ export class LiveGateway
     @ConnectedSocket() client,
   ) {
     const { setUpMode } = body;
-    const setUpParams = await this.msService.setupTransport(
-      setUpMode,
-      client.id,
-    );
+    const setUpParams = await this.msService.setupTransport(setUpMode, client);
     return setUpParams;
   }
 
@@ -134,19 +133,22 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.JOIN_INTERVIEW_ROOM)
-  async transportConsume(@MessageBody() body, @ConnectedSocket() client) {
+  async transportConsume(
+    @MessageBody() body,
+    @ConnectedSocket() client: Socket,
+  ) {
     const { rtpCapabilities, transportId } = body;
-    return this.msService.joinRoom(rtpCapabilities, transportId, client.id);
+    return this.msService.joinRoom(rtpCapabilities, transportId, client);
   }
 
   @SubscribeMessage(GatewayEvents.GET_NEW_PRODUCER)
-  async getNewProducer(@MessageBody() body, @ConnectedSocket() client) {
+  async getNewProducer(@MessageBody() body, @ConnectedSocket() client: Socket) {
     const { producerId, rtpCapabilities, transportId } = body;
     return this.msService.getNewProducer(
       producerId,
       transportId,
       rtpCapabilities,
-      client.id,
+      client,
     );
   }
 

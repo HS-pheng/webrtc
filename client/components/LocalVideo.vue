@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-4 border-3">
-    <h3 class="text-center">Local video</h3>
+    <h3 class="text-center">{{ userName }}</h3>
     <video
       ref="localVideo"
       class="transform rotate-y-180 bg-gray-500 w-xs"
@@ -10,11 +10,15 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useUserInfo } from '../stores/useUserInfo';
 const props = defineProps<{ videoTrack: MediaStreamTrack }>();
+const userInfo = useUserInfo();
 
 const localVideo = ref<HTMLVideoElement | null>(null);
 const localStream = ref<MediaStream | null>(null);
 const videoTrack = computed(() => props.videoTrack);
+
+const userName = computed(() => userInfo.name);
 
 onMounted(() => {
   localStream.value = new MediaStream();

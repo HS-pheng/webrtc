@@ -15,6 +15,11 @@ export interface ICreateConsumer {
 
 export type IPeerConsumers = Consumer[];
 
+export interface IPeer {
+  username?: string;
+  consumers?: IPeerConsumers;
+}
+
 export interface candidateStats {
   listNumber: string;
   candidateListSize: string;

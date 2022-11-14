@@ -1,16 +1,20 @@
 <template>
-  <video
-    ref="video"
-    autoplay
-    playsinline
-    class="transform rotate-y-180 bg-gray-500 w-xs"
-  ></video>
+  <div>
+    <h3 class="text-center">{{ props.username }}</h3>
+    <video
+      ref="video"
+      autoplay
+      playsinline
+      class="transform rotate-y-180 bg-gray-500 w-xs"
+    ></video>
+  </div>
 </template>
 <script setup lang="ts">
 const video = ref<HTMLVideoElement | null>(null);
 const stream = ref<MediaStream | null>(null);
 const props = defineProps<{
   tracks: MediaStreamTrack[];
+  username: string;
 }>();
 
 onMounted(() => {
