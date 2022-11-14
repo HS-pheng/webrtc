@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'libs/snake-naming.strategy';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ListingsModule } from './listings/listings.module';
 import { LiveModule } from './live/live.module';
 
@@ -22,7 +20,5 @@ import { LiveModule } from './live/live.module';
       synchronize: false,
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
