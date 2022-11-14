@@ -1,4 +1,4 @@
-import { workerSettings, mediaCodecs } from '../../config/mediasoup';
+import { workerSettings, mediaCodecs, listenIps } from '../../config/mediasoup';
 import { Injectable } from '@nestjs/common';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
@@ -18,15 +18,8 @@ export class MsService {
   private worker: Worker = null;
   private router: Router = null;
 
-  private listenIps = [
-    {
-      ip: '0.0.0.0',
-      // announcedIp: '192.168.1.127',
-      announcedIp: '172.23.220.210',
-    },
-  ];
-
   async onModuleInit() {
+    setUpObservers();
     this.worker = await createWorker(workerSettings);
     this.router = await this.worker.createRouter({
       mediaCodecs,
@@ -37,7 +30,6 @@ export class MsService {
         consumers: new Map(),
       },
     });
-    setUpObservers();
   }
 
   async setupTransport(setUpMode, socketId) {
@@ -61,7 +53,7 @@ export class MsService {
 
   async createTransport(type, uid) {
     const transport = await this.router.createWebRtcTransport({
-      listenIps: this.listenIps,
+      listenIps,
       appData: {
         type,
         uid,
