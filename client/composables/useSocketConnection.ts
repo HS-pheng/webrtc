@@ -1,6 +1,8 @@
 import { useCandidateStore } from '~~/stores/useCandidateStore';
 import { useWaitingStore } from '~~/stores/useWaitingStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
+import { CommunicationEvents, BusEvents } from '~~/constants/socketEvents';
+import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
 
 export function useSocketConnection() {
   const socketStore = useWebsocket();
@@ -12,8 +14,12 @@ export function useSocketConnection() {
 
   tryOnMounted(() => {
     if (!connected.value) {
+      socket.value?.disconnect();
+
       socketStore.connect();
-      connected.value = true;
+      socketStore.socket.on('connect', () => {
+        connected.value = true;
+      });
       socket.value = socketStore.socket;
 
       subscribeInterviewerEventListener();
@@ -22,32 +28,32 @@ export function useSocketConnection() {
   });
 
   function subscribeInterviewerEventListener() {
-    socket.value.on('add-to-waiting', (uid: string) => {
+    socket.value.on(CommunicationEvents.ADD_TO_WAITING, (uid: string) => {
       candidateStore.push(uid);
     });
 
-    socket.value.on('candidate-closed', (uid: string) => {
+    socket.value.on(CommunicationEvents.CANDIDATE_CLOSED, (uid: string) => {
       candidateStore.remove(uid);
       if (uid === candidateStore.currentCandidate)
         candidateStore.removeCurrentCandidate();
     });
 
-    socket.value.on('remove-from-waiting', (uid: string) => {
+    socket.value.on(CommunicationEvents.REMOVE_FROM_WAITING, (uid: string) => {
       candidateStore.remove(uid);
     });
 
-    socket.value.on('next-candidate', () => {
+    socket.value.on(CommunicationEvents.NEXT_CANDIDATE, () => {
       candidateStore.currentCandidate = candidateStore.front();
       candidateStore.shift();
     });
 
-    socket.value.on('no-candidate', () => {
-      candidateStore.currentCandidate = '';
+    socket.value.on(CommunicationEvents.NO_CANDIDATE, () => {
+      candidateStore.currentCandidate = NO_CURRENT_CANDIDATE;
     });
   }
 
   function subscribeCandidateEventListener() {
-    socket.value.on('ready-for-interview', () => {
+    socket.value.on(CommunicationEvents.READY_FOR_INTERVIEW, () => {
       return navigateTo({
         path: '/room/interview',
         query: {
@@ -56,12 +62,13 @@ export function useSocketConnection() {
       });
     });
 
-    socket.value.on('candidate-statistic', (stats) => {
+    socket.value.on(CommunicationEvents.CANDIDATE_STATISTIC, (stats) => {
       waitingStore.updateStats(stats);
     });
-    socket.value.on('interview-finished', () => {
-      const interviewEventBroadcaster = useEventBus('interviewEvents');
-      interviewEventBroadcaster.emit('interview-finished');
+
+    socket.value.on(CommunicationEvents.INTERVIEW_FINISHED, () => {
+      const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
+      interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
       $msManager.closeTransports();
     });
   }

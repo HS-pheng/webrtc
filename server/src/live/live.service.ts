@@ -4,6 +4,7 @@ import { Socket } from 'socket.io';
 import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { SocketService } from 'src/socket/socket.service';
 import { interviewerGroup } from 'src/socket/socket.constant';
+import { CommunicationEvents } from 'src/types/events';
 
 @Injectable()
 export class LiveService {
@@ -19,12 +20,16 @@ export class LiveService {
     client
       .to(interviewerGroup)
       .to(currentCandidate)
-      .emit('producer-closed', client.id);
+      .emit(CommunicationEvents.PRODUCER_CLOSED, client.id);
   }
 
   interviewDisconnectionCleanup(client: Socket) {
     this.watingListService.removeCandidate(client.id);
-    this.socketService.send(interviewerGroup, 'candidate-closed', client.id);
+    this.socketService.send(
+      interviewerGroup,
+      CommunicationEvents.CANDIDATE_CLOSED,
+      client.id,
+    );
 
     this.socketService.updateCandidateStatistics(
       this.watingListService.getWaitingList(),
@@ -34,7 +39,11 @@ export class LiveService {
   async announceNewCandidate(client: Socket) {
     const updatedCandidateList = this.watingListService.getWaitingList();
     await this.socketService.updateCandidateStatistics(updatedCandidateList);
-    this.socketService.send(interviewerGroup, 'add-to-waiting', client.id);
+    this.socketService.send(
+      interviewerGroup,
+      CommunicationEvents.ADD_TO_WAITING,
+      client.id,
+    );
   }
 
   async removeCurrentCandidate() {
@@ -45,8 +54,15 @@ export class LiveService {
     )?.[0];
     if (currentCandidate) {
       this.msService.closeUserTransports(currentCandidate.id);
-      this.socketService.server.emit('producer-closed', currentCandidate.id);
-      this.socketService.send(currentCandidate.id, 'interview-finished');
+      this.socketService.send(
+        interviewerGroup,
+        CommunicationEvents.PRODUCER_CLOSED,
+        currentCandidate.id,
+      );
+      this.socketService.send(
+        currentCandidate.id,
+        CommunicationEvents.INTERVIEW_FINISHED,
+      );
     }
   }
 
@@ -57,7 +73,13 @@ export class LiveService {
       this.watingListService.getWaitingList(),
     );
 
-    this.socketService.send(nextCandidate, 'ready-for-interview');
-    this.socketService.send(interviewerGroup, 'next-candidate');
+    this.socketService.send(
+      nextCandidate,
+      CommunicationEvents.READY_FOR_INTERVIEW,
+    );
+    this.socketService.send(
+      interviewerGroup,
+      CommunicationEvents.NEXT_CANDIDATE,
+    );
   }
 }

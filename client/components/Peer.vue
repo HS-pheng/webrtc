@@ -10,10 +10,7 @@
 const video = ref<HTMLVideoElement | null>(null);
 const stream = ref<MediaStream | null>(null);
 const props = defineProps<{
-  tracks: {
-    video: MediaStreamTrack;
-    audio: MediaStreamTrack;
-  };
+  tracks: MediaStreamTrack[];
 }>();
 
 onMounted(() => {
@@ -21,11 +18,12 @@ onMounted(() => {
   video.value.srcObject = stream.value;
 });
 
-const videoTrack = computed(() => props.tracks.video);
-const audioTrack = computed(() => props.tracks.audio);
+const tracks = computed(() => props.tracks);
 
-whenever(stream, (newStream) => {
-  videoTrack.value && newStream.addTrack(videoTrack.value);
-  audioTrack.value && newStream.addTrack(audioTrack.value);
+watch([stream, tracks], ([newStream, newTracks]) => {
+  newStream &&
+    newTracks.forEach((element) => {
+      newStream.addTrack(element);
+    });
 });
 </script>

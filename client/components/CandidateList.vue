@@ -19,8 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import { useCandidateStore } from '~~/stores/useCandidateStore';
-const candidateStore = useCandidateStore();
-const candidateList = computed(() => candidateStore.candidateList);
-const currentCandidate = computed(() => candidateStore.currentCandidate);
+const props = defineProps<{
+  candidateList: string[];
+  currentCandidate: string;
+}>();
+
+const candidateList = computed(() => props.candidateList);
+const currentCandidate = computed(() => props.currentCandidate);
 </script>

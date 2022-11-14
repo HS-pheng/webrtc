@@ -1,24 +1,23 @@
 import { useWebsocket } from '~~/stores/useWebsocket';
+import { InterviewRequests } from '~~/constants/socketEvents';
 
 export function useInterviewManager() {
   const socketStore = useWebsocket();
 
   const requestNextCandidate = () => {
-    socketStore.socket.emit('next-candidate', {});
+    socketStore.socket.emit(InterviewRequests.NEXT_CANDIDATE, {});
   };
 
   const getCandidateList = () => {
-    return socketStore.socket.request('get-candidate-list', {});
+    return socketStore.socket.request(InterviewRequests.GET_CANDIDATE_LIST, {});
   };
 
   const joinGroup = (type: 'interviewer' | 'candidate') => {
-    if (type === 'interviewer') {
-      socketStore.socket.emit('join-interviewer-group');
-    } else socketStore.socket.emit('join-candidate-group');
+    socketStore.socket.emit(InterviewRequests.JOIN_GROUP, type);
   };
 
   const leaveWaitingList = () => {
-    socketStore.socket.emit('leave-waiting-list');
+    socketStore.socket.emit(InterviewRequests.LEAVE_WAITING_LIST);
   };
 
   return {

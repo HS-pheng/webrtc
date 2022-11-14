@@ -7,26 +7,21 @@ export const usePeerStore = defineStore('peerStore', () => {
   const addPeer = (consumer, producerClientId) => {
     let peerConsumers = peers.value.get(producerClientId);
     if (!peerConsumers) {
-      peerConsumers = {};
+      peerConsumers = [];
     }
-    peerConsumers[`${consumer.track.kind}Consumer`] = consumer;
+    peerConsumers.push(consumer);
     peers.value.set(producerClientId, peerConsumers);
   };
 
   const removePeer = (producerClientId) => {
     const peerConsumers = peers.value.get(producerClientId);
-    for (const kind in peerConsumers) {
-      peerConsumers[kind].close();
-    }
+    peerConsumers && peerConsumers.forEach((consumer) => consumer.close());
     peers.value.delete(producerClientId);
   };
 
   const destroyPeers = () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [peerId, consumer] of peers.value) {
-      for (const kind in consumer) {
-        consumer[kind].close();
-      }
+    for (const [, peerConsumers] of peers.value) {
+      peerConsumers.forEach((consumer) => consumer.close());
     }
     peers.value = new Map<string, IPeerConsumers>();
   };

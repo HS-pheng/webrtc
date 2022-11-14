@@ -12,7 +12,7 @@ export const useWebsocket = defineStore('socket', () => {
     const socket = io('http://localhost:3001', { autoConnect: false });
     socketPromise.value = makeSocketPromise(socket);
     socket.on('connect', () => {
-      console.log('connected');
+      console.log('connected: ', socket.id);
       connected.value = true;
     });
     socket.connect();

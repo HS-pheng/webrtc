@@ -5,7 +5,6 @@ export const useWaitingStore = defineStore('waiting-store', () => {
   const stats = ref<candidateStats | null>(null);
 
   const updateStats = (newStats: candidateStats) => {
-    console.log('stats updated');
     stats.value = newStats;
   };
 

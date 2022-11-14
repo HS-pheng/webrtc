@@ -7,10 +7,13 @@
     <div v-else class="flex m-4 flex-col">
       <div class="mx-auto flex flex-row gap-4">
         <LocalVideo :video-track="localVideoTrack" />
-        <RemotePeers />
+        <RemotePeers v-if="hasRemotePeer" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
-        <CandidateList />
+        <CandidateList
+          :current-candidate="candidateStore.currentCandidate"
+          :candidate-list="candidateStore.candidateList"
+        />
         <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
     </div>
@@ -23,20 +26,22 @@ import { usePeerStore } from '~~/stores/usePeerStore';
 
 const { $msManager } = useNuxtApp();
 const { connected, disconnectSocket } = useSocketConnection();
-const interviewManager = useInterviewManager();
 
+const interviewManager = useInterviewManager();
 const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
-
-const localVideoTrack = ref<MediaStreamTrack | null>(null);
-const localAudioTrack = ref<MediaStreamTrack | null>(null);
 
 const route = useRoute();
 const isInterviewer = computed(() => route?.query.interviewer === 'true');
 const interviewFinished = ref(false);
+const interviewEventListener = useEventBus('interviewEvents');
+attachInterviewEventListener();
+
+const localVideoTrack = ref<MediaStreamTrack | null>(null);
+const localAudioTrack = ref<MediaStreamTrack | null>(null);
 
 const joinInterviewRoom = async () => {
-  const { videoTrack, audioTrack } = await getUserTracks();
+  const { videoTrack, audioTrack } = await useLocalMedia();
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
   await $msManager.createProducer(videoTrack);
@@ -54,8 +59,6 @@ const renderCandidateList = async () => {
 const requestNextCandidate = () => {
   if (connected.value) interviewManager.requestNextCandidate();
 };
-
-onMounted(attachInterviewEventListener);
 
 whenever(
   connected,
@@ -80,19 +83,7 @@ function stopTrack() {
   localAudioTrack.value?.stop();
 }
 
-async function getUserTracks() {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: true,
-  });
-  const videoTrack = stream.getVideoTracks()[0];
-  const audioTrack = stream.getAudioTracks()[0];
-
-  return { videoTrack, audioTrack };
-}
-
 function attachInterviewEventListener() {
-  const interviewEventListener = useEventBus('interviewEvents');
   interviewEventListener.on((event) => {
     if (event === 'interview-finished') {
       interviewFinished.value = true;
@@ -100,4 +91,6 @@ function attachInterviewEventListener() {
     }
   });
 }
+
+const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 </script>

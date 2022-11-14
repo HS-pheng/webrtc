@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
+import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
 
 export const useCandidateStore = defineStore('candidateStore', () => {
   const candidateList = ref<string[]>([]);
-  const currentCandidate = ref<string>();
+  const currentCandidate = ref<string>(NO_CURRENT_CANDIDATE);
 
   const init = (candidates: string[]) => {
-    console.log(candidates);
     candidateList.value = candidates;
   };
 
@@ -33,7 +33,7 @@ export const useCandidateStore = defineStore('candidateStore', () => {
   };
 
   const removeCurrentCandidate = () => {
-    currentCandidate.value = '';
+    currentCandidate.value = NO_CURRENT_CANDIDATE;
   };
 
   return {

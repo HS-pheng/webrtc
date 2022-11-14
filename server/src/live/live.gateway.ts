@@ -13,6 +13,8 @@ import { MsService } from 'src/mediasoup/ms.service';
 import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { interviewerGroup, candidateGroup } from 'src/socket/socket.constant';
 import { LiveService } from './live.service';
+import { GatewayEvents } from 'src/types/events';
+import { CommunicationEvents } from 'src/types/events';
 
 @WebSocketGateway({
   cors: {
@@ -45,19 +47,20 @@ export class LiveGateway
 
   // ---------- interview endpoints --------------
 
-  @SubscribeMessage('join-interviewer-group')
-  async joinInterviewerGroup(@ConnectedSocket() client: Socket) {
-    client.join(interviewerGroup);
-  }
-
-  @SubscribeMessage('join-candidate-group')
-  async handleNewCandidate(@ConnectedSocket() client: Socket) {
+  @SubscribeMessage(GatewayEvents.JOIN_GROUP)
+  async handleJoinRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() type: 'interviewer' | 'candidate',
+  ) {
+    if (type === 'interviewer') {
+      return client.join(interviewerGroup);
+    }
     this.waitingListService.addToWaitingList(client.id);
     await client.join(candidateGroup);
     await this.liveService.announceNewCandidate(client);
   }
 
-  @SubscribeMessage('next-candidate')
+  @SubscribeMessage(GatewayEvents.NEXT_CANDIDATE)
   async handleNextCandidateRequest() {
     const nextCandidate = this.waitingListService.getNextCandidate();
 
@@ -65,26 +68,35 @@ export class LiveGateway
 
     nextCandidate
       ? this.liveService.announceMovingToNextCandidate(nextCandidate)
-      : this.socketService.send(interviewerGroup, 'no-candidate');
+      : this.socketService.send(
+          interviewerGroup,
+          CommunicationEvents.NO_CANDIDATE,
+        );
   }
 
-  @SubscribeMessage('get-candidate-list')
+  @SubscribeMessage(GatewayEvents.GET_CANDIDATE_LIST)
   getCandidateList() {
     return this.waitingListService.getWaitingList();
   }
 
-  @SubscribeMessage('leave-waiting-list')
+  @SubscribeMessage(GatewayEvents.LEAVE_WAITING_LIST)
   removeFromWaitingList(@ConnectedSocket() client: Socket) {
     this.waitingListService.removeCandidate(client.id);
+
     this.socketService.updateCandidateStatistics(
       this.waitingListService.getWaitingList(),
     );
-    this.socketService.send(interviewerGroup, 'remove-from-waiting', client.id);
+
+    this.socketService.send(
+      interviewerGroup,
+      CommunicationEvents.REMOVE_FROM_WAITING,
+      client.id,
+    );
   }
 
   // ---------- mediasoup endpoints --------------
 
-  @SubscribeMessage('setup-transport')
+  @SubscribeMessage(GatewayEvents.SETUP_TRANSPORT)
   async setupTransport(
     @MessageBody() body: { setUpMode: string },
     @ConnectedSocket() client,
@@ -97,13 +109,13 @@ export class LiveGateway
     return setUpParams;
   }
 
-  @SubscribeMessage('connect-transport')
+  @SubscribeMessage(GatewayEvents.CONNECT_TRANSPORT)
   async connectTransport(@MessageBody() body): Promise<boolean> {
     const { dtlsParameters, transportId } = body;
     return this.msService.connectTransport(dtlsParameters, transportId);
   }
 
-  @SubscribeMessage('produce')
+  @SubscribeMessage(GatewayEvents.PRODUCE)
   async produce(
     @MessageBody() body,
     @ConnectedSocket() client: Socket,
@@ -112,21 +124,22 @@ export class LiveGateway
     const producerId = await this.msService.produce(params, transportId);
 
     const currentCandidate = this.waitingListService.currentCandidate;
+
     client
       .to(interviewerGroup)
       .to(currentCandidate)
-      .emit('new-producer', producerId);
+      .emit(CommunicationEvents.NEW_PRODUCER, producerId);
 
     return producerId;
   }
 
-  @SubscribeMessage('join-interview-room')
+  @SubscribeMessage(GatewayEvents.JOIN_INTERVIEW_ROOM)
   async transportConsume(@MessageBody() body, @ConnectedSocket() client) {
     const { rtpCapabilities, transportId } = body;
     return this.msService.joinRoom(rtpCapabilities, transportId, client.id);
   }
 
-  @SubscribeMessage('get-new-producer')
+  @SubscribeMessage(GatewayEvents.GET_NEW_PRODUCER)
   async getNewProducer(@MessageBody() body, @ConnectedSocket() client) {
     const { producerId, rtpCapabilities, transportId } = body;
     return this.msService.getNewProducer(
@@ -137,7 +150,7 @@ export class LiveGateway
     );
   }
 
-  @SubscribeMessage('resume-consumer')
+  @SubscribeMessage(GatewayEvents.RESUME_CONSUMER)
   async resumeConsumer(@MessageBody() body): Promise<boolean> {
     const { consumerId } = body;
     return this.msService.resumeConsumer(consumerId);

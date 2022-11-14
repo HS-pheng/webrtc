@@ -13,10 +13,7 @@ export interface ICreateConsumer {
   appData: any;
 }
 
-export interface IPeerConsumers {
-  audioConsumer?: Consumer;
-  videoConsumer?: Consumer;
-}
+export type IPeerConsumers = Consumer[];
 
 export interface candidateStats {
   listNumber: string;

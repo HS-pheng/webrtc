@@ -132,13 +132,10 @@ export class MsManager {
   // --- peer logic ---
   attachPeerListener() {
     this.socket.on('new-producer', (producerId) => {
-      console.log('received new producer');
-      console.log('device state', this.device.loaded);
       this.handleNewPeerProducer(producerId);
     });
 
     this.socket.on('producer-closed', (producerClientId) => {
-      console.log('device state', this.device.loaded);
       this.handlePeerProducerClosed(producerClientId);
     });
   }
@@ -153,7 +150,6 @@ export class MsManager {
         consumerId: producer.id,
       });
 
-      console.log('peer here');
       this.peerStore.addPeer(consumer, producerClientId);
     });
   }
