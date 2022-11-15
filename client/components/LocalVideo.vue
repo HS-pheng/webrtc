@@ -10,15 +10,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useUserInfo } from '../stores/useUserInfo';
+import { useHandshakePayload } from '../stores/useHandshakePayload';
 const props = defineProps<{ videoTrack: MediaStreamTrack }>();
-const userInfo = useUserInfo();
+const handshakePayload = useHandshakePayload();
 
 const localVideo = ref<HTMLVideoElement | null>(null);
 const localStream = ref<MediaStream | null>(null);
 const videoTrack = computed(() => props.videoTrack);
 
-const userName = computed(() => userInfo.username);
+const userName = computed(() => handshakePayload.username);
 
 onMounted(() => {
   localStream.value = new MediaStream();

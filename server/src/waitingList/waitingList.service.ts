@@ -16,7 +16,6 @@ export class WaitingListService {
   }
 
   removeCandidate(clientId: string) {
-    console.log('removed candidate from the list');
     return this.waitingList.remove(clientId);
   }
 

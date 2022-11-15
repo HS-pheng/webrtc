@@ -1,5 +1,5 @@
 import { useCandidateStore } from '~~/stores/useCandidateStore';
-import { useUserInfo } from '~~/stores/useUserInfo';
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { useWaitingStore } from '~~/stores/useWaitingStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
 import { CommunicationEvents, BusEvents } from '~~/constants/socketEvents';
@@ -14,14 +14,14 @@ export function useSocketConnection() {
   const candidateStore = useCandidateStore();
   const waitingStore = useWaitingStore();
   const peerStore = usePeerStore();
-  const userInfo = useUserInfo();
+  const handshakePayload = useHandshakePayload();
   const { $msManager } = useNuxtApp();
 
   tryOnMounted(() => {
     if (!connected.value) {
       socket.value?.disconnect();
 
-      socketStore.connect({ username: userInfo.username });
+      socketStore.connect({ username: handshakePayload.username });
       socketStore.socket.on('connect', () => {
         connected.value = true;
       });

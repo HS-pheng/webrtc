@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUserInfo } from '~~/stores/useUserInfo';
-const userInfoStore = useUserInfo();
+import { useHandshakePayload } from '@@/stores/useHandshakePayload';
+const handshakePayload = useHandshakePayload();
 
 const joinAsInterviewer: any = () => {
   return navigateTo({
@@ -33,6 +33,6 @@ const joinAsCandidate: any = () => {
 };
 
 const onNameChange = (event) => {
-  userInfoStore.username = event.target.value;
+  handshakePayload.username = event.target.value;
 };
 </script>
