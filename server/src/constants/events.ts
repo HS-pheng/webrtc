@@ -9,6 +9,7 @@ export const GatewayEvents = {
   JOIN_INTERVIEW_ROOM: 'join-interview-room',
   GET_NEW_PRODUCER: 'get-new-producer',
   RESUME_CONSUMER: 'resume-consumer',
+  GET_PEERS_INFO: 'get-peers-info',
 } as const;
 
 export const CommunicationEvents = {
@@ -21,4 +22,5 @@ export const CommunicationEvents = {
   INTERVIEW_FINISHED: 'interview-finished',
   READY_FOR_INTERVIEW: 'ready-for-interview',
   NEXT_CANDIDATE: 'next-candidate',
+  NEW_PEER_INFO: 'new-peer-info',
 } as const;

@@ -33,6 +33,6 @@ const joinAsCandidate: any = () => {
 };
 
 const onNameChange = (event) => {
-  userInfoStore.name = event.target.value;
+  userInfoStore.username = event.target.value;
 };
 </script>

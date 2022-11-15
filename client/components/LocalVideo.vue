@@ -18,7 +18,7 @@ const localVideo = ref<HTMLVideoElement | null>(null);
 const localStream = ref<MediaStream | null>(null);
 const videoTrack = computed(() => props.videoTrack);
 
-const userName = computed(() => userInfo.name);
+const userName = computed(() => userInfo.username);
 
 onMounted(() => {
   localStream.value = new MediaStream();

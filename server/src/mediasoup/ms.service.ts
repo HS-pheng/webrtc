@@ -37,11 +37,11 @@ export class MsService {
     const transports = {
       sendTransport:
         setUpMode === 'send' || setUpMode === 'both'
-          ? await this.createTransport('send', socket.id, socket.data.username)
+          ? await this.createTransport('send', socket.id)
           : undefined,
       recvTransport:
         setUpMode === 'recv' || setUpMode === 'both'
-          ? await this.createTransport('recv', socket.id, socket.data.username)
+          ? await this.createTransport('recv', socket.id)
           : undefined,
     };
 
@@ -52,13 +52,12 @@ export class MsService {
     };
   }
 
-  async createTransport(type, uid, username) {
+  async createTransport(type, uid) {
     const transport = await this.router.createWebRtcTransport({
       listenIps,
       appData: {
         type,
         uid,
-        username,
       },
     });
 
@@ -102,7 +101,6 @@ export class MsService {
       rtpParameters: params.rtpParameters,
       appData: {
         uid: transport.appData.uid,
-        username: transport.appData.username,
       },
     });
 
@@ -185,7 +183,6 @@ export class MsService {
       appData: {
         producerClientId: producer.appData.uid,
         uid: client.id,
-        producerUsername: producer.appData.username,
       },
     });
 

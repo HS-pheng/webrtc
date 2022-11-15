@@ -100,17 +100,16 @@ export class MsManager {
     );
   }
 
-  async joinRoom() {
-    const deviceRTPCapabilities = this.device.rtpCapabilities;
+  async loadPeersMSConsumers() {
     const peerProducers: ICreateConsumer[] = await this.socket.request(
       'join-interview-room',
       {
-        rtpCapabilities: deviceRTPCapabilities,
+        rtpCapabilities: this.device.rtpCapabilities,
         transportId: this.recvTransport.id,
       },
     );
 
-    this.createPeerConsumers(peerProducers);
+    this.createAndAddPeerConsumers(peerProducers);
   }
 
   async createProducer(track: MediaStreamTrack) {
@@ -141,17 +140,16 @@ export class MsManager {
     });
   }
 
-  createPeerConsumers(peerProducers: ICreateConsumer[]) {
+  createAndAddPeerConsumers(peerProducers: ICreateConsumer[]) {
     peerProducers.forEach(async (producer) => {
       const consumer = await this.createConsumer(producer);
-      const producerUsername = consumer.appData.producerUsername as string;
       const producerClientId = consumer.appData.producerClientId as string;
 
       await this.socket.request('resume-consumer', {
         consumerId: producer.id,
       });
 
-      this.peerStore.addPeer(consumer, producerUsername, producerClientId);
+      this.peerStore.addPeerConsumer(consumer, producerClientId);
     });
   }
 
@@ -166,14 +164,13 @@ export class MsManager {
     );
 
     const consumer = await this.createConsumer(params);
-    const producerUsername = consumer.appData.producerUsername;
     const producerClientId = consumer.appData.producerClientId;
 
     await this.socket.request('resume-consumer', {
       consumerId: consumer.id,
     });
 
-    this.peerStore.addPeer(consumer, producerUsername, producerClientId);
+    this.peerStore.addPeerConsumer(consumer, producerClientId);
   }
 
   handlePeerProducerClosed(producerClientId) {

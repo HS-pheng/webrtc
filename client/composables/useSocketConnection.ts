@@ -4,6 +4,8 @@ import { useWaitingStore } from '~~/stores/useWaitingStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
 import { CommunicationEvents, BusEvents } from '~~/constants/socketEvents';
 import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
+import { usePeerStore } from '~~/stores/usePeerStore';
+import { IPeerInfo } from '~~/constants/types';
 
 export function useSocketConnection() {
   const socketStore = useWebsocket();
@@ -11,6 +13,7 @@ export function useSocketConnection() {
   const connected = ref(socketStore.connected);
   const candidateStore = useCandidateStore();
   const waitingStore = useWaitingStore();
+  const peerStore = usePeerStore();
   const userInfo = useUserInfo();
   const { $msManager } = useNuxtApp();
 
@@ -18,12 +21,13 @@ export function useSocketConnection() {
     if (!connected.value) {
       socket.value?.disconnect();
 
-      socketStore.connect(userInfo);
+      socketStore.connect({ username: userInfo.username });
       socketStore.socket.on('connect', () => {
         connected.value = true;
       });
       socket.value = socketStore.socket;
 
+      subscribeGeneralEventListener();
       subscribeInterviewerEventListener();
       subscribeCandidateEventListener();
     }
@@ -74,6 +78,15 @@ export function useSocketConnection() {
       interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
       $msManager.closeTransports();
     });
+  }
+
+  function subscribeGeneralEventListener() {
+    socket.value.on(
+      CommunicationEvents.NEW_PEER_INFO,
+      (peer: { id: string; info: IPeerInfo }) => {
+        peerStore.addPeerInfo(peer.info, peer.id);
+      },
+    );
   }
 
   function disconnectSocket() {

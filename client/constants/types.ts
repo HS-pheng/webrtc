@@ -1,10 +1,5 @@
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 
-export interface Peer {
-  uid: string;
-  consumer: Consumer;
-}
-
 export interface ICreateConsumer {
   id: string;
   producerId: string;
@@ -13,11 +8,13 @@ export interface ICreateConsumer {
   appData: any;
 }
 
-export type IPeerConsumers = Consumer[];
+export interface IPeerInfo {
+  username: string;
+}
 
 export interface IPeer {
-  username?: string;
-  consumers?: IPeerConsumers;
+  peerInfo?: IPeerInfo;
+  consumers?: Consumer[];
 }
 
 export interface candidateStats {

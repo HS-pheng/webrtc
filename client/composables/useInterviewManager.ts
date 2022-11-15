@@ -1,8 +1,11 @@
 import { useWebsocket } from '~~/stores/useWebsocket';
 import { InterviewRequests } from '~~/constants/socketEvents';
+import { usePeerStore } from '~~/stores/usePeerStore';
+import { IPeerInfo } from '~~/constants/types';
 
 export function useInterviewManager() {
   const socketStore = useWebsocket();
+  const peerStore = usePeerStore();
 
   const requestNextCandidate = () => {
     socketStore.socket.emit(InterviewRequests.NEXT_CANDIDATE, {});
@@ -20,10 +23,22 @@ export function useInterviewManager() {
     socketStore.socket.emit(InterviewRequests.LEAVE_WAITING_LIST);
   };
 
+  const loadPeersInfo = async () => {
+    const peersInfo: { [peerId: string]: IPeerInfo } =
+      await socketStore.socket.request(InterviewRequests.GET_PEERS_INFO, {});
+
+    console.log(peersInfo);
+
+    Object.entries(peersInfo).forEach(([peerId, peerInfo]) =>
+      peerStore.addPeerInfo(peerInfo, peerId),
+    );
+  };
+
   return {
     requestNextCandidate,
     getCandidateList,
     joinGroup,
     leaveWaitingList,
+    loadPeersInfo,
   };
 }

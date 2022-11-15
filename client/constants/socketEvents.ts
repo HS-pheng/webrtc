@@ -1,6 +1,7 @@
 export const InterviewRequests = {
   NEXT_CANDIDATE: 'next-candidate',
   GET_CANDIDATE_LIST: 'get-candidate-list',
+  GET_PEERS_INFO: 'get-peers-info',
   JOIN_GROUP: 'join-group',
   LEAVE_WAITING_LIST: 'leave-waiting-list',
 } as const;
@@ -14,6 +15,7 @@ export const CommunicationEvents = {
   READY_FOR_INTERVIEW: 'ready-for-interview',
   CANDIDATE_STATISTIC: 'candidate-statistic',
   INTERVIEW_FINISHED: 'interview-finished',
+  NEW_PEER_INFO: 'new-peer-info',
 } as const;
 
 export const BusEvents = {

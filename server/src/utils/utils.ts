@@ -118,3 +118,12 @@ export class Queue<T> {
     return this.content.length;
   }
 }
+
+export const extrackHandshakeData = (handshakeData) => {
+  const result = {};
+  const unneededProperties = ['EIO', 'transport', 'sid', 'j', 't'];
+  Object.entries(handshakeData).forEach(([key, value]) => {
+    if (unneededProperties.indexOf(key) < 0) result[key] = value;
+  });
+  return result;
+};

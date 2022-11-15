@@ -13,8 +13,10 @@ import { MsService } from 'src/mediasoup/ms.service';
 import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { interviewerGroup, candidateGroup } from 'src/socket/socket.constant';
 import { LiveService } from './live.service';
-import { GatewayEvents } from 'src/types/events';
-import { CommunicationEvents } from 'src/types/events';
+import { GatewayEvents } from 'src/constants/events';
+import { CommunicationEvents } from 'src/constants/events';
+import { IPeerInfo } from 'src/constants/types';
+import { extrackHandshakeData } from 'src/utils/utils';
 
 @WebSocketGateway({
   cors: {
@@ -36,12 +38,14 @@ export class LiveGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    client.data.username = client.handshake.query.name;
-    console.log('This client just connected: ', client.data.username);
+    client.data.handshakeData = extrackHandshakeData(
+      client.handshake.query,
+    ) as IPeerInfo;
+    console.log('Client connected: ', client.data.handshakeData.username);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-    console.log('This client just disconnected:', client.id);
+    console.log('Client disconnected:', client.id);
     this.liveService.msDisconnectionCleanup(client);
     this.liveService.interviewDisconnectionCleanup(client);
   }
@@ -67,7 +71,6 @@ export class LiveGateway
 
     this.liveService.removeCurrentCandidate();
 
-    console.log('next candidate', nextCandidate);
     nextCandidate
       ? this.liveService.announceMovingToNextCandidate(nextCandidate)
       : this.socketService.send(
@@ -96,8 +99,12 @@ export class LiveGateway
     );
   }
 
-  // ---------- mediasoup endpoints --------------
+  @SubscribeMessage(GatewayEvents.GET_PEERS_INFO)
+  async getPeersInfo(@ConnectedSocket() client: Socket) {
+    return this.socketService.getPeersInfoExcept(client);
+  }
 
+  // ---------- mediasoup endpoints --------------
   @SubscribeMessage(GatewayEvents.SETUP_TRANSPORT)
   async setupTransport(
     @MessageBody() body: { setUpMode: string },
@@ -122,12 +129,17 @@ export class LiveGateway
     const { transportId, ...params } = body;
     const producerId = await this.msService.produce(params, transportId);
 
-    const currentCandidate = this.waitingListService.currentCandidate;
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      CommunicationEvents.NEW_PEER_INFO,
+      { info: client.data.handshakeData, id: client.id },
+    );
 
-    client
-      .to(interviewerGroup)
-      .to(currentCandidate)
-      .emit(CommunicationEvents.NEW_PRODUCER, producerId);
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      CommunicationEvents.NEW_PRODUCER,
+      producerId,
+    );
 
     return producerId;
   }

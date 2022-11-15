@@ -46,7 +46,10 @@ const joinInterviewRoom = async () => {
   await $msManager.init(setUpMode);
   await $msManager.createProducer(videoTrack);
   await $msManager.createProducer(audioTrack);
-  await $msManager.joinRoom();
+
+  await interviewManager.loadPeersInfo();
+  await $msManager.loadPeersMSConsumers();
+
   localVideoTrack.value = videoTrack;
   localAudioTrack.value = audioTrack;
 };

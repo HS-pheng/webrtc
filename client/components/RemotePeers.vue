@@ -6,18 +6,18 @@
         v-for="[peerId, peer] in ps.peers"
         :key="peerId"
         :tracks="extractTracks(peer.consumers)"
-        :username="peer.username"
+        :peer-info="peer.peerInfo"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IPeerConsumers } from '~~/constants/types';
+import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { usePeerStore } from '~~/stores/usePeerStore';
 const ps = usePeerStore();
 
-const extractTracks = (consumers: IPeerConsumers) => {
+const extractTracks = (consumers: Consumer[]) => {
   const tracks = [];
   consumers.forEach((consumer) => tracks.push(consumer.track));
   return tracks;

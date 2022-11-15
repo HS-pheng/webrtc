@@ -1,18 +1,23 @@
 import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { defineStore } from 'pinia';
-import { IPeer } from '~~/constants/types';
+import { IPeer, IPeerInfo } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
   const peers = ref(new Map<string, IPeer>());
 
-  const addPeer = (consumer: Consumer, name: string, peerId: string) => {
+  const addPeerConsumer = (consumer: Consumer, peerId: string) => {
+    const peer = peers.value.get(peerId);
+    peer.consumers.push(consumer);
+    peers.value.set(peerId, peer);
+  };
+
+  const addPeerInfo = (peerInfo: IPeerInfo, peerId: string) => {
     let peer = peers.value.get(peerId);
     if (!peer) {
       peer = {};
       peer.consumers = [];
     }
-    peer.consumers.push(consumer);
-    peer.username = name;
+    peer.peerInfo = peerInfo;
     peers.value.set(peerId, peer);
   };
 
@@ -23,8 +28,7 @@ export const usePeerStore = defineStore('peerStore', () => {
   };
 
   const destroyPeers = () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [peerId, peer] of peers.value) {
+    for (const [, peer] of peers.value) {
       peer.consumers.forEach((consumer) => consumer.close());
     }
     peers.value = new Map<string, IPeer>();
@@ -32,8 +36,9 @@ export const usePeerStore = defineStore('peerStore', () => {
 
   return {
     peers,
-    addPeer,
+    addPeerConsumer,
     removePeer,
     destroyPeers,
+    addPeerInfo,
   };
 });

@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Server } from 'socket.io';
-import { candidateGroup } from './socket.constant';
+import { stringify } from 'querystring';
+import { Server, Socket } from 'socket.io';
+import { IPeerInfo } from 'src/constants/types';
+import { WaitingListService } from 'src/waitingList/waitingList.service';
+import { candidateGroup, interviewerGroup } from './socket.constant';
 
 @Injectable() // change name to socketService
 export class SocketService {
   server: Server;
+
+  constructor(private waitingListService: WaitingListService) {}
 
   injectServer(server: Server) {
     this.server = server;
@@ -18,6 +23,15 @@ export class SocketService {
     return (await this.server.fetchSockets()).filter(
       (socket) => socket.id === socketId,
     );
+  }
+
+  async toInterviewRoomExceptSender(
+    client: Socket,
+    eventName: string,
+    payload = {},
+  ) {
+    const currentCandidate = this.waitingListService.currentCandidate;
+    client.to(currentCandidate).to(interviewerGroup).emit(eventName, payload);
   }
 
   async updateCandidateStatistics(candidateList) {
@@ -35,5 +49,19 @@ export class SocketService {
         candidateListSize,
       });
     });
+  }
+
+  async getPeersInfoExcept(client: Socket) {
+    const currentCandidateSocketId = this.waitingListService.currentCandidate;
+    const socketsInInterviewRoom = await this.server
+      .in(interviewerGroup)
+      .in(currentCandidateSocketId)
+      .fetchSockets();
+    const peersInfo = {};
+    socketsInInterviewRoom.forEach((socket) => {
+      if (socket.id !== client.id)
+        peersInfo[socket.id] = socket.data.handshakeData;
+    });
+    return peersInfo as { [peerId: string]: IPeerInfo };
   }
 }

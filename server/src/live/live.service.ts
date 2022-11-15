@@ -4,7 +4,7 @@ import { Socket } from 'socket.io';
 import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { SocketService } from 'src/socket/socket.service';
 import { interviewerGroup } from 'src/socket/socket.constant';
-import { CommunicationEvents } from 'src/types/events';
+import { CommunicationEvents } from 'src/constants/events';
 
 @Injectable()
 export class LiveService {
@@ -16,11 +16,11 @@ export class LiveService {
 
   msDisconnectionCleanup(client: Socket) {
     this.msService.closeUserTransports(client.id);
-    const currentCandidate = this.watingListService.currentCandidate;
-    client
-      .to(interviewerGroup)
-      .to(currentCandidate)
-      .emit(CommunicationEvents.PRODUCER_CLOSED, client.id);
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      CommunicationEvents.PRODUCER_CLOSED,
+      client.id,
+    );
   }
 
   interviewDisconnectionCleanup(client: Socket) {

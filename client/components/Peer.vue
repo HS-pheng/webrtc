@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3 class="text-center">{{ props.username }}</h3>
+    <h3 class="text-center">{{ username }}</h3>
     <video
       ref="video"
       autoplay
@@ -14,7 +14,7 @@ const video = ref<HTMLVideoElement | null>(null);
 const stream = ref<MediaStream | null>(null);
 const props = defineProps<{
   tracks: MediaStreamTrack[];
-  username: string;
+  peerInfo;
 }>();
 
 onMounted(() => {
@@ -23,6 +23,7 @@ onMounted(() => {
 });
 
 const tracks = computed(() => props.tracks);
+const username = computed(() => props.peerInfo.username);
 
 watch([stream, tracks], ([newStream, newTracks]) => {
   newStream &&

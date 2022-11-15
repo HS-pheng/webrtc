@@ -5,4 +5,4 @@ import { WaitingListService } from './waitingList.service';
   providers: [WaitingListService],
   exports: [WaitingListService],
 })
-export class InterviewModule {}
+export class WaitingListModule {}
