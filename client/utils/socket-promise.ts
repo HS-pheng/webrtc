@@ -15,7 +15,10 @@ export function makeSocketPromise(
     timeout: number = requestTimeout,
   ) => {
     return new Promise((resolve, reject) => {
-      setTimeout(() => reject(new Error('Timeout!')), timeout);
+      setTimeout(
+        () => reject(new Error(`Timeout! called endpoint: ${endpoint}`)),
+        timeout,
+      );
       socket.emit(endpoint, payload, (res) => {
         resolve(res);
       });

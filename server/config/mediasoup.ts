@@ -1,3 +1,5 @@
+import { config } from 'dotenv';
+config();
 import { WorkerSettings } from 'mediasoup/node/lib/Worker';
 import { RtpCodecCapability } from 'mediasoup/node/lib/RtpParameters';
 
@@ -5,6 +7,13 @@ export const portRange = {
   minPort: 40000,
   maxPort: 40020,
 };
+
+export const listenIps = [
+  {
+    ip: '0.0.0.0',
+    announcedIp: process.env.ANNOUNCED_IP,
+  },
+];
 
 export const workerSettings: WorkerSettings = {
   rtcMinPort: 40000,

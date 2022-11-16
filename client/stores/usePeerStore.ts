@@ -1,29 +1,44 @@
+import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { defineStore } from 'pinia';
-import { IPeerTracks } from '~~/constants/types';
+import { IPeer, IPeerInfo } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
-  // peerId => PeerTracks
-  const peers = ref(new Map<string, IPeerTracks>());
+  const peers = ref(new Map<string, IPeer>());
 
-  const addPeer = (consumer, producerClientId) => {
-    let peerTracks = peers.value.get(producerClientId);
-    if (!peerTracks) {
-      peerTracks = {
-        video: undefined,
-        audio: undefined,
-      };
+  const addPeerConsumer = (consumer: Consumer, peerId: string) => {
+    const peer = peers.value.get(peerId);
+    peer.consumers.push(consumer);
+    peers.value.set(peerId, peer);
+  };
+
+  const addPeerInfo = (peerInfo: IPeerInfo, peerId: string) => {
+    let peer = peers.value.get(peerId);
+    if (!peer) {
+      peer = {};
+      peer.consumers = [];
     }
-    peerTracks[consumer.track.kind] = consumer.track;
-    peers.value.set(producerClientId, peerTracks);
+    peer.peerInfo = peerInfo;
+    peers.value.set(peerId, peer);
   };
 
   const removePeer = (producerClientId) => {
+    const peer = peers.value.get(producerClientId);
+    peer?.consumers && peer.consumers.forEach((consumer) => consumer.close());
     peers.value.delete(producerClientId);
+  };
+
+  const destroyPeers = () => {
+    for (const [, peer] of peers.value) {
+      peer.consumers.forEach((consumer) => consumer.close());
+    }
+    peers.value = new Map<string, IPeer>();
   };
 
   return {
     peers,
-    addPeer,
+    addPeerConsumer,
     removePeer,
+    destroyPeers,
+    addPeerInfo,
   };
 });

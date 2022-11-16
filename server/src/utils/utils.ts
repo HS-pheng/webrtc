@@ -80,3 +80,50 @@ export const setUpObservers = (): void => {
     });
   });
 };
+
+// definition of queue class. should have push, pop, front, back, size methods
+export class Queue<T> {
+  content: T[] = [];
+
+  constructor(elementArray?: T[]) {
+    elementArray?.forEach((e) => this.content.push(e));
+  }
+
+  push(e: T) {
+    this.content.push(e);
+  }
+
+  remove(e: T) {
+    const index = this.content.indexOf(e);
+    if (index >= 0) {
+      this.content.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  shift() {
+    this.content.shift();
+  }
+
+  front() {
+    return this.content[0] || null;
+  }
+
+  back() {
+    return this.content[this.content.length - 1];
+  }
+
+  size() {
+    return this.content.length;
+  }
+}
+
+export const extrackHandshakeData = (handshakeData) => {
+  const result = {};
+  const unneededProperties = ['EIO', 'transport', 'sid', 'j', 't'];
+  Object.entries(handshakeData).forEach(([key, value]) => {
+    if (unneededProperties.indexOf(key) < 0) result[key] = value;
+  });
+  return result;
+};

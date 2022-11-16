@@ -8,11 +8,14 @@ export const useWebsocket = defineStore('socket', () => {
   const socketPromise = ref<SocketPromise | null>(null);
   const connected = ref<boolean>(false);
 
-  const connect = () => {
-    const socket = io('http://localhost:3001', { autoConnect: false });
+  const connect = (handshakeData: { username: string }) => {
+    const socket = io('http://localhost:3001', {
+      autoConnect: false,
+      query: handshakeData,
+    });
     socketPromise.value = makeSocketPromise(socket);
     socket.on('connect', () => {
-      console.log('connected');
+      console.log('connected: ', socket.id);
       connected.value = true;
     });
     socket.connect();

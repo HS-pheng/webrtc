@@ -1,4 +1,4 @@
-import { workerSettings, mediaCodecs } from '../../config/mediasoup';
+import { workerSettings, mediaCodecs, listenIps } from '../../config/mediasoup';
 import { Injectable } from '@nestjs/common';
 import { Worker } from 'mediasoup/node/lib/Worker';
 import { Router } from 'mediasoup/node/lib/Router';
@@ -12,25 +12,15 @@ import { Producer } from 'mediasoup/node/lib/Producer';
 import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
-import { SignalingService } from 'src/signaling/signaling.service';
 import { Socket } from 'socket.io';
 
 @Injectable()
 export class MsService {
-  constructor(private signalingService: SignalingService) {}
-
   private worker: Worker = null;
   private router: Router = null;
 
-  private listenIps = [
-    {
-      ip: '0.0.0.0',
-      // announcedIp: '192.168.1.127',
-      announcedIp: '172.25.45.172',
-    },
-  ];
-
   async onModuleInit() {
+    setUpObservers();
     this.worker = await createWorker(workerSettings);
     this.router = await this.worker.createRouter({
       mediaCodecs,
@@ -41,18 +31,17 @@ export class MsService {
         consumers: new Map(),
       },
     });
-    setUpObservers();
   }
 
-  async setupTransport(setUpMode, socketId) {
+  async setupTransport(setUpMode, socket: Socket) {
     const transports = {
       sendTransport:
         setUpMode === 'send' || setUpMode === 'both'
-          ? await this.createTransport('send', socketId)
+          ? await this.createTransport('send', socket.id)
           : undefined,
       recvTransport:
         setUpMode === 'recv' || setUpMode === 'both'
-          ? await this.createTransport('recv', socketId)
+          ? await this.createTransport('recv', socket.id)
           : undefined,
     };
 
@@ -65,7 +54,7 @@ export class MsService {
 
   async createTransport(type, uid) {
     const transport = await this.router.createWebRtcTransport({
-      listenIps: this.listenIps,
+      listenIps,
       appData: {
         type,
         uid,
@@ -95,7 +84,7 @@ export class MsService {
     return true;
   }
 
-  async produce(params, transportId, client: Socket) {
+  async produce(params, transportId) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -103,8 +92,6 @@ export class MsService {
     if (!transport) return null;
 
     const producer = await this.createProducer(params, transport);
-    client.broadcast.emit('new-producer', producer.id);
-
     return producer.id;
   }
 
@@ -121,8 +108,6 @@ export class MsService {
       (this.router.appData.producers as Map<string, Producer>).delete(
         producer.id,
       );
-      const producerClientId = producer.appData.uid;
-      this.signalingService.server.emit('producer-closed', producerClientId);
     });
 
     (this.router.appData.producers as Map<string, Producer>).set(
@@ -136,7 +121,7 @@ export class MsService {
   async joinRoom(
     rtpCapabilities: RtpCapabilities,
     transportId: string,
-    clientId: string,
+    client: Socket,
   ) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
@@ -145,7 +130,7 @@ export class MsService {
     const producers = [];
     (this.router.appData.producers as Map<string, Producer>).forEach(
       (producer) => {
-        if (producer.appData.uid !== clientId) producers.push(producer);
+        if (producer.appData.uid !== client.id) producers.push(producer);
       },
     );
 
@@ -164,7 +149,7 @@ export class MsService {
             producer.id,
             transport,
             rtpCapabilities,
-            clientId,
+            client,
           );
 
           resolve({
@@ -185,7 +170,7 @@ export class MsService {
     producerId: string,
     transport: WebRtcTransport,
     rtpCapabilities,
-    clientId,
+    client: Socket,
   ) {
     const producer = (
       this.router.appData.producers as Map<string, Producer>
@@ -197,7 +182,7 @@ export class MsService {
       paused: true,
       appData: {
         producerClientId: producer.appData.uid,
-        uid: clientId,
+        uid: client.id,
       },
     });
 
@@ -215,7 +200,12 @@ export class MsService {
     return consumer;
   }
 
-  async getNewProducer(producerId, transportId, rtpCapabilities, clientId) {
+  async getNewProducer(
+    producerId,
+    transportId,
+    rtpCapabilities,
+    client: Socket,
+  ) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
@@ -226,7 +216,7 @@ export class MsService {
       producerId,
       transport,
       rtpCapabilities,
-      clientId,
+      client,
     );
 
     return {

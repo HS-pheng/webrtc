@@ -1,42 +1,34 @@
 <template>
-  <video
-    ref="video"
-    autoplay
-    playsinline
-    class="transform rotate-y-180 bg-gray-500 w-xs"
-  ></video>
+  <div>
+    <h3 class="text-center">{{ username }}</h3>
+    <video
+      ref="video"
+      autoplay
+      playsinline
+      class="transform rotate-y-180 bg-gray-500 w-xs"
+    ></video>
+  </div>
 </template>
 <script setup lang="ts">
 const video = ref<HTMLVideoElement | null>(null);
-const stream = ref<MediaStream>(new MediaStream());
+const stream = ref<MediaStream | null>(null);
 const props = defineProps<{
-  tracks;
+  tracks: MediaStreamTrack[];
+  peerInfo;
 }>();
 
 onMounted(() => {
+  stream.value = new MediaStream();
   video.value.srcObject = stream.value;
 });
 
-const videoTrack = computed(() => props.tracks.video);
-const audioTrack = computed(() => props.tracks.audio);
+const tracks = computed(() => props.tracks);
+const username = computed(() => props.peerInfo.username);
 
-watch(
-  audioTrack,
-  (newAudioTrack) => {
-    if (newAudioTrack) {
-      stream.value.addTrack(newAudioTrack);
-    }
-  },
-  { immediate: true },
-);
-
-watch(
-  videoTrack,
-  (newVideoTrack) => {
-    if (newVideoTrack) {
-      stream.value.addTrack(newVideoTrack);
-    }
-  },
-  { immediate: true },
-);
+watch([stream, tracks], ([newStream, newTracks]) => {
+  newStream &&
+    newTracks.forEach((element) => {
+      newStream.addTrack(element);
+    });
+});
 </script>

@@ -29,7 +29,6 @@ export class MsManager {
 
   socketInit(socket: SocketPromise) {
     this.socket = socket;
-    this.attachPeerListener();
   }
 
   async init(setUpMode: string) {
@@ -57,6 +56,7 @@ export class MsManager {
       );
       this.attachTransportEventListener('recv');
     }
+    this.attachPeerListener();
   }
 
   attachTransportEventListener(type: 'send' | 'recv') {
@@ -100,17 +100,16 @@ export class MsManager {
     );
   }
 
-  async joinRoom() {
-    const deviceRTPCapabilities = this.device.rtpCapabilities;
+  async loadPeersMSConsumers() {
     const peerProducers: ICreateConsumer[] = await this.socket.request(
-      'join-room',
+      'join-interview-room',
       {
-        rtpCapabilities: deviceRTPCapabilities,
+        rtpCapabilities: this.device.rtpCapabilities,
         transportId: this.recvTransport.id,
       },
     );
 
-    this.createPeerConsumers(peerProducers);
+    this.createAndAddPeerConsumers(peerProducers);
   }
 
   async createProducer(track: MediaStreamTrack) {
@@ -136,21 +135,21 @@ export class MsManager {
     });
 
     this.socket.on('producer-closed', (producerClientId) => {
+      console.log('got here');
       this.handlePeerProducerClosed(producerClientId);
     });
   }
 
-  createPeerConsumers(peerProducers: ICreateConsumer[]) {
+  createAndAddPeerConsumers(peerProducers: ICreateConsumer[]) {
     peerProducers.forEach(async (producer) => {
       const consumer = await this.createConsumer(producer);
-
-      const producerClientId = consumer.appData.producerClientId;
+      const producerClientId = consumer.appData.producerClientId as string;
 
       await this.socket.request('resume-consumer', {
         consumerId: producer.id,
       });
 
-      this.peerStore.addPeer(consumer, producerClientId);
+      this.peerStore.addPeerConsumer(consumer, producerClientId);
     });
   }
 
@@ -171,10 +170,15 @@ export class MsManager {
       consumerId: consumer.id,
     });
 
-    this.peerStore.addPeer(consumer, producerClientId);
+    this.peerStore.addPeerConsumer(consumer, producerClientId);
   }
 
   handlePeerProducerClosed(producerClientId) {
     this.peerStore.removePeer(producerClientId);
+  }
+
+  closeTransports() {
+    this.sendTransport?.close();
+    this.recvTransport?.close();
   }
 }

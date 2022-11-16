@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { SignalingModule } from 'src/signaling/signaling.module';
+import { SignalingModule } from 'src/socket/socket.module';
 import { MsService } from './ms.service';
 
 @Module({
