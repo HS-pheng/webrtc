@@ -1,7 +1,7 @@
 import { useWebsocket } from '~~/stores/useWebsocket';
 import { InterviewRequests } from '~~/constants/socketEvents';
 import { usePeerStore } from '~~/stores/usePeerStore';
-import { IPeerInfo } from '~~/constants/types';
+import { candidateInfo, IPeerInfo } from '~~/constants/types';
 
 export function useInterviewManager() {
   const socketStore = useWebsocket();
@@ -11,7 +11,7 @@ export function useInterviewManager() {
     socketStore.socket.emit(InterviewRequests.NEXT_CANDIDATE, {});
   };
 
-  const getCandidateList = () => {
+  const getCandidateList = (): Promise<candidateInfo[]> => {
     return socketStore.socket.request(InterviewRequests.GET_CANDIDATE_LIST, {});
   };
 

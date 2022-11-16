@@ -21,3 +21,8 @@ export interface candidateStats {
   listNumber: string;
   candidateListSize: string;
 }
+
+export interface candidateInfo {
+  id: string;
+  username: string;
+}

@@ -93,8 +93,8 @@ export class Queue<T> {
     this.content.push(e);
   }
 
-  remove(e: T) {
-    const index = this.content.indexOf(e);
+  removeBy(propertyName: string, value: any) {
+    const index = this.content.findIndex((e) => e[propertyName] === value);
     if (index >= 0) {
       this.content.splice(index, 1);
       return true;

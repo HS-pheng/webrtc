@@ -5,8 +5,8 @@
       <ul>
         <p v-if="candidateList.length === 0">No candidate</p>
         <div>
-          <li v-for="(name, index) in candidateList" :key="name">
-            {{ index + 1 }}. {{ name }}
+          <li v-for="(candidate, index) in candidateList" :key="candidate.id">
+            {{ index + 1 }}. {{ candidate.username }}
           </li>
         </div>
       </ul>
@@ -19,11 +19,13 @@
 </template>
 
 <script setup lang="ts">
+import { candidateInfo } from '~~/constants/types';
+
 const props = defineProps<{
-  candidateList: string[];
-  currentCandidate: string;
+  candidateList: candidateInfo[];
+  currentCandidate: candidateInfo;
 }>();
 
 const candidateList = computed(() => props.candidateList);
-const currentCandidate = computed(() => props.currentCandidate);
+const currentCandidate = computed(() => props.currentCandidate.username);
 </script>

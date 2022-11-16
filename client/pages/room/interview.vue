@@ -75,11 +75,7 @@ whenever(
   { immediate: true },
 );
 
-onUnmounted(() => {
-  stopTrack();
-  disconnectSocket();
-  peerStore.destroyPeers();
-});
+onUnmounted(disconnectionCleanup);
 
 function stopTrack() {
   localVideoTrack.value?.stop();
@@ -90,10 +86,15 @@ function attachInterviewEventListener() {
   interviewEventListener.on((event) => {
     if (event === 'interview-finished') {
       interviewFinished.value = true;
-      stopTrack();
+      disconnectionCleanup();
     }
   });
 }
 
 const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
+function disconnectionCleanup() {
+  stopTrack();
+  disconnectSocket();
+  peerStore.destroyPeers();
+}
 </script>

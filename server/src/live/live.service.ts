@@ -5,6 +5,7 @@ import { WaitingListService } from 'src/waitingList/waitingList.service';
 import { SocketService } from 'src/socket/socket.service';
 import { interviewerGroup } from 'src/socket/socket.constant';
 import { CommunicationEvents } from 'src/constants/events';
+import { candidateInfo } from 'src/constants/types';
 
 @Injectable()
 export class LiveService {
@@ -39,17 +40,22 @@ export class LiveService {
   async announceNewCandidate(client: Socket) {
     const updatedCandidateList = this.watingListService.getWaitingList();
     await this.socketService.updateCandidateStatistics(updatedCandidateList);
+
+    const newCandidateInfo: candidateInfo = {
+      id: client.id,
+      username: client.data.handshakeData.username,
+    };
     this.socketService.send(
       interviewerGroup,
       CommunicationEvents.ADD_TO_WAITING,
-      client.id,
+      newCandidateInfo,
     );
   }
 
   async removeCurrentCandidate() {
     const currentCandidate = (
       await this.socketService.findSocketById(
-        this.watingListService.currentCandidate,
+        this.watingListService.currentCandidate?.id,
       )
     )?.[0];
     if (currentCandidate) {
@@ -66,15 +72,15 @@ export class LiveService {
     }
   }
 
-  announceMovingToNextCandidate(nextCandidate: string) {
+  announceMovingToNextCandidate(nextCandidate: candidateInfo) {
     this.watingListService.currentCandidate = nextCandidate;
-    this.watingListService.removeCandidate(nextCandidate);
+    this.watingListService.removeCandidate(nextCandidate.id);
     this.socketService.updateCandidateStatistics(
       this.watingListService.getWaitingList(),
     );
 
     this.socketService.send(
-      nextCandidate,
+      nextCandidate.id,
       CommunicationEvents.READY_FOR_INTERVIEW,
     );
     this.socketService.send(
