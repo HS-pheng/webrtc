@@ -17,9 +17,6 @@ import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { usePeerStore } from '~~/stores/usePeerStore';
 const ps = usePeerStore();
 
-const extractTracks = (consumers: Consumer[]) => {
-  const tracks = [];
-  consumers.forEach((consumer) => tracks.push(consumer.track));
-  return tracks;
-};
+const extractTracks = (consumers: Consumer[]) =>
+  consumers.map((consumer) => consumer.track);
 </script>

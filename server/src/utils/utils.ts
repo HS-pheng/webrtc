@@ -120,10 +120,7 @@ export class Queue<T> {
 }
 
 export const extrackHandshakeData = (handshakeData) => {
-  const result = {};
-  const unneededProperties = ['EIO', 'transport', 'sid', 'j', 't'];
-  Object.entries(handshakeData).forEach(([key, value]) => {
-    if (unneededProperties.indexOf(key) < 0) result[key] = value;
-  });
-  return result;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { EIO, transport, sid, j, t, ...necessaryProperties } = handshakeData;
+  return necessaryProperties;
 };
