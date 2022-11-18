@@ -1,7 +1,6 @@
 import { Device } from 'mediasoup-client';
 import { Producer } from 'mediasoup-client/lib/Producer';
 import { Transport } from 'mediasoup-client/lib/Transport';
-import { usePeerStore } from '../stores/usePeerStore';
 import { SocketPromise } from './socket-promise';
 import { producerOptions } from '~~/constants/config';
 import { ICreateConsumer } from '~~/constants/types';
@@ -16,12 +15,9 @@ export class MsManager {
   videoProducer: Producer | null = null;
   audioProducer: Producer | null = null;
 
-  peerStore = null;
-
   constructor() {
     try {
       this.device = new Device();
-      this.peerStore = usePeerStore();
     } catch (err) {
       throw new Error(err);
     }
@@ -56,7 +52,6 @@ export class MsManager {
       );
       this.attachTransportEventListener('recv');
     }
-    this.attachPeerListener();
   }
 
   attachTransportEventListener(type: 'send' | 'recv') {
@@ -100,7 +95,7 @@ export class MsManager {
     );
   }
 
-  async loadPeersMSConsumers() {
+  async getPeersMSConsumers() {
     const peerProducers: ICreateConsumer[] = await this.socket.request(
       'join-interview-room',
       {
@@ -109,7 +104,7 @@ export class MsManager {
       },
     );
 
-    this.createAndAddPeerConsumers(peerProducers);
+    return this.createPeerConsumers(peerProducers);
   }
 
   async createProducer(track: MediaStreamTrack) {
@@ -129,28 +124,19 @@ export class MsManager {
   }
 
   // --- peer logic ---
-  attachPeerListener() {
-    this.socket.on('new-producer', (producerId) => {
-      this.handleNewPeerProducer(producerId);
-    });
 
-    this.socket.on('producer-closed', (producerClientId) => {
-      console.log('got here');
-      this.handlePeerProducerClosed(producerClientId);
-    });
-  }
-
-  createAndAddPeerConsumers(peerProducers: ICreateConsumer[]) {
-    peerProducers.forEach(async (producer) => {
+  createPeerConsumers(peerProducers: ICreateConsumer[]) {
+    const consumers = peerProducers.map(async (producer) => {
       const consumer = await this.createConsumer(producer);
-      const producerClientId = consumer.appData.producerClientId as string;
 
       await this.socket.request('resume-consumer', {
         consumerId: producer.id,
       });
 
-      this.peerStore.addPeerConsumer(consumer, producerClientId);
+      return consumer;
     });
+
+    return Promise.all(consumers);
   }
 
   async handleNewPeerProducer(producerId) {
@@ -164,17 +150,12 @@ export class MsManager {
     );
 
     const consumer = await this.createConsumer(params);
-    const producerClientId = consumer.appData.producerClientId;
 
     await this.socket.request('resume-consumer', {
       consumerId: consumer.id,
     });
 
-    this.peerStore.addPeerConsumer(consumer, producerClientId);
-  }
-
-  handlePeerProducerClosed(producerClientId) {
-    this.peerStore.removePeer(producerClientId);
+    return consumer;
   }
 
   closeTransports() {

@@ -47,7 +47,7 @@ const joinInterviewRoom = async () => {
   await $msManager.createProducer(localMedia.audioTrack.value);
 
   await interviewManager.loadPeersInfo();
-  await $msManager.loadPeersMSConsumers();
+  await loadPeersConsumers();
 };
 
 const renderCandidateList = async () => {
@@ -58,6 +58,13 @@ const renderCandidateList = async () => {
 const requestNextCandidate = () => {
   if (connected.value) interviewManager.requestNextCandidate();
 };
+
+async function loadPeersConsumers() {
+  const consumers = await $msManager.getPeersMSConsumers();
+  consumers.forEach((consumer) => peerStore.addPeerConsumer(consumer));
+}
+
+const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 
 whenever(
   connected,
@@ -81,8 +88,6 @@ function attachInterviewEventListener() {
     }
   });
 }
-
-const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 
 function disconnectionCleanup() {
   localMedia.stopMedia();

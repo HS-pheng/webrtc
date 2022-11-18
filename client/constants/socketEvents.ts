@@ -22,3 +22,8 @@ export const BusEvents = {
   INTERVIEW_EVENTS: 'interviewEvents',
   INTERVIEW_FINISHED: 'interview-finished',
 } as const;
+
+export const MsEvents = {
+  NEW_PRODUCER: 'new-producer',
+  PRODUCER_CLOSED: 'producer-closed',
+};

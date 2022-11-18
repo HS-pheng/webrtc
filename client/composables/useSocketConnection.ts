@@ -2,7 +2,11 @@ import { useCandidateStore } from '~~/stores/useCandidateStore';
 import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { useWaitingStore } from '~~/stores/useWaitingStore';
 import { useWebsocket } from '~~/stores/useWebsocket';
-import { CommunicationEvents, BusEvents } from '~~/constants/socketEvents';
+import {
+  CommunicationEvents,
+  BusEvents,
+  MsEvents,
+} from '~~/constants/socketEvents';
 import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
 import { usePeerStore } from '~~/stores/usePeerStore';
 import { candidateInfo, IPeerInfo } from '~~/constants/types';
@@ -30,6 +34,7 @@ export function useSocketConnection() {
       subscribeGeneralEventListener();
       subscribeInterviewerEventListener();
       subscribeCandidateEventListener();
+      subscribeMediaSoupListener();
     }
   });
 
@@ -95,6 +100,17 @@ export function useSocketConnection() {
         peerStore.addPeerInfo(peer.info, peer.id);
       },
     );
+  }
+
+  function subscribeMediaSoupListener() {
+    socket.value.on(MsEvents.NEW_PRODUCER, async (producerId) => {
+      const consumer = await $msManager.handleNewPeerProducer(producerId);
+      peerStore.addPeerConsumer(consumer);
+    });
+
+    socket.value.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
+      peerStore.removePeer(producerClientId);
+    });
   }
 
   function disconnectSocket() {

@@ -5,7 +5,8 @@ import { IPeer, IPeerInfo } from '~~/constants/types';
 export const usePeerStore = defineStore('peerStore', () => {
   const peers = ref(new Map<string, IPeer>());
 
-  const addPeerConsumer = (consumer: Consumer, peerId: string) => {
+  const addPeerConsumer = (consumer: Consumer) => {
+    const peerId = consumer.appData.producerClientId as string;
     const peer = peers.value.get(peerId);
     peer.consumers.push(consumer);
     peers.value.set(peerId, peer);
