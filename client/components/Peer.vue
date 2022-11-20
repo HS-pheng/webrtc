@@ -27,13 +27,13 @@ onMounted(() => {
 const tracks = computed(() => props.tracks);
 const username = computed(() => props.peerInfo.username);
 
-watch([stream, tracks], ([newStream, newTracks], [, oldTracks]) => {
-  if (newStream) {
+watch([stream, tracks], ([currentStream, newTracks], [, oldTracks]) => {
+  if (currentStream) {
     oldTracks.forEach((track) => {
-      if (!newTracks.includes(track)) newStream.removeTrack(track);
+      if (!newTracks.includes(track)) currentStream.removeTrack(track);
     });
     newTracks.forEach((track) => {
-      if (!oldTracks.includes(track)) newStream.addTrack(track);
+      if (!oldTracks.includes(track)) currentStream.addTrack(track);
     });
   }
 });

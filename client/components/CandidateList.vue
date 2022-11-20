@@ -13,7 +13,7 @@
     </div>
     <div class="border-3 mt-3 mb-3 p-3 flex-grow">
       <p>Current candidate</p>
-      <p>{{ currentCandidate }}</p>
+      <p>{{ currentCandidateName }}</p>
     </div>
   </div>
 </template>
@@ -23,9 +23,9 @@ import { candidateInfo } from '~~/constants/types';
 
 const props = defineProps<{
   candidateList: candidateInfo[];
-  currentCandidate: candidateInfo;
+  currentCandidate: Partial<candidateInfo>;
 }>();
 
 const candidateList = computed(() => props.candidateList);
-const currentCandidate = computed(() => props.currentCandidate.username);
+const currentCandidateName = computed(() => props.currentCandidate.username);
 </script>
