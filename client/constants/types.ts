@@ -10,6 +10,7 @@ export interface ICreateConsumer {
 
 export interface IPeerInfo {
   username: string;
+  isInterviewer: string;
 }
 
 export interface IPeer {

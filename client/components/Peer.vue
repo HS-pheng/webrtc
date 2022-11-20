@@ -1,11 +1,15 @@
 <template>
-  <div>
-    <h3 class="text-center">{{ username }}</h3>
+  <div class="overflow-hidden relative">
+    <h3
+      class="text-center z-1 absolute bottom-0 bg-opacity-50 text-white bg-slate-600 p-1"
+    >
+      {{ username }}
+    </h3>
     <video
       ref="video"
       autoplay
       playsinline
-      class="transform bg-gray-500 w-xs"
+      class="transform bg-gray-500 object-fit -z-1 m-auto"
     ></video>
   </div>
 </template>

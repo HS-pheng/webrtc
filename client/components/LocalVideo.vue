@@ -1,24 +1,23 @@
 <template>
-  <div class="flex flex-col gap-4 border-3">
-    <h3 class="text-center">{{ userName }}</h3>
+  <div class="overflow-hidden relative">
+    <h3
+      class="text-center z-1 absolute bottom-0 bg-opacity-50 text-white bg-slate-600 p-1"
+    >
+      You
+    </h3>
     <video
       ref="localVideo"
-      class="transform rotate-y-180 bg-gray-500 w-xs"
       autoplay
       playsinline
+      class="transform bg-gray-500 object-fit m-auto -z-1"
     ></video>
   </div>
 </template>
 <script setup lang="ts">
-import { useHandshakePayload } from '../stores/useHandshakePayload';
-const props = defineProps<{ videoTrack: MediaStreamTrack }>();
-const handshakePayload = useHandshakePayload();
+const localVideoTrack = inject<Ref<MediaStreamTrack>>('localVideo');
 
 const localVideo = ref<HTMLVideoElement | null>(null);
 const localStream = ref<MediaStream | null>(null);
-const videoTrack = computed(() => props.videoTrack);
-
-const userName = computed(() => handshakePayload.username);
 
 onMounted(() => {
   localStream.value = new MediaStream();
@@ -26,8 +25,8 @@ onMounted(() => {
 });
 
 watchEffect(() => {
-  if (localStream.value && videoTrack.value) {
-    localStream.value.addTrack(videoTrack.value);
+  if (localStream.value && localVideoTrack.value) {
+    localStream.value.addTrack(localVideoTrack.value);
   }
 });
 </script>

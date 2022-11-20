@@ -4,10 +4,9 @@
       <p>Your interview is finished</p>
       <CommonButton @click.once="navigateTo('/')">Home</CommonButton>
     </div>
-    <div v-else class="flex m-4 flex-col">
-      <div class="mx-auto flex flex-row gap-4">
-        <LocalVideo :video-track="localMedia.videoTrack.value" />
-        <RemotePeers v-if="hasRemotePeer" />
+    <div v-else class="flex flex-col">
+      <div class="border-3">
+        <VideoScreen :peers="peers" :is-interviewer="isInterviewer" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
         <CandidateList
@@ -38,6 +37,7 @@ const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
 const localMedia = useLocalMedia();
+provide('localVideo', localMedia.videoTrack);
 
 const joinInterviewRoom = async () => {
   await localMedia.getMedia();
@@ -63,8 +63,6 @@ async function loadPeersConsumers() {
   const consumers = await $msManager.getPeersMSConsumers();
   consumers.forEach((consumer) => peerStore.addPeerConsumer(consumer));
 }
-
-const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 
 whenever(
   connected,
@@ -94,4 +92,12 @@ function disconnectionCleanup() {
   disconnectSocket();
   peerStore.destroyPeers();
 }
+
+const peers = computed(() => {
+  const peers = [];
+  for (const [, peer] of peerStore.peers) {
+    peers.push(peer);
+  }
+  return peers;
+});
 </script>

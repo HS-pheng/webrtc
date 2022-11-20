@@ -25,7 +25,8 @@ export function useSocketConnection() {
     if (!connected.value) {
       socket.value?.disconnect();
 
-      socketStore.connect({ username: handshakePayload.username });
+      const { username, isInterviewer } = handshakePayload;
+      socketStore.connect({ username, isInterviewer });
       socketStore.socket.on('connect', () => {
         connected.value = true;
       });
