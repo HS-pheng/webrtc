@@ -7,7 +7,7 @@ import {
   BusEvents,
   MsEvents,
 } from '~~/constants/socketEvents';
-import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
+import { EMPTY_CANDIDATE } from '~~/constants/constant';
 import { usePeerStore } from '~~/stores/usePeerStore';
 import { candidateInfo, IPeerInfo } from '~~/constants/types';
 
@@ -68,7 +68,7 @@ export function useSocketConnection() {
     });
 
     socket.value.on(CommunicationEvents.NO_CANDIDATE, () => {
-      candidateStore.currentCandidate = NO_CURRENT_CANDIDATE;
+      candidateStore.currentCandidate = EMPTY_CANDIDATE;
     });
   }
 
