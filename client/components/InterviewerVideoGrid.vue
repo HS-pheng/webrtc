@@ -15,6 +15,7 @@
 import { IPeer } from '~~/constants/types';
 import { extractTracks } from '~~/utils/utils';
 
+// isInterviewer: Ref<boolean>
 const isInterviewer = inject('isInterviewer');
 
 defineProps<{

@@ -14,8 +14,8 @@ export interface IPeerInfo {
 }
 
 export interface IPeer {
-  peerInfo?: IPeerInfo;
-  consumers?: Consumer[];
+  peerInfo: IPeerInfo;
+  consumers: Consumer[];
 }
 
 export interface candidateStats {

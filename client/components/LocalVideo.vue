@@ -14,7 +14,8 @@
   </div>
 </template>
 <script setup lang="ts">
-const localVideoTrack = inject('localVideoTrack');
+// localVideoTracks: Ref<MediaStreamTrack>
+const localVideoTrack = inject('localVideoTrack') as any;
 
 const localVideo = ref<HTMLVideoElement | null>(null);
 const localStream = ref<MediaStream | null>(null);
