@@ -23,7 +23,7 @@ import { candidateInfo } from '~~/constants/types';
 
 const props = defineProps<{
   candidateList: candidateInfo[];
-  currentCandidate: Partial<candidateInfo>;
+  currentCandidate: candidateInfo;
 }>();
 
 const candidateList = computed(() => props.candidateList);
