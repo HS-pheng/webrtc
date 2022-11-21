@@ -43,3 +43,11 @@ export const calcViewlayout = (containerWidth, containerHeight, numItems) => {
 
   return layout;
 };
+
+export const extractItemStyle = (item) => {
+  return {
+    visibility: 'visible',
+    width: `${item.width}px`,
+    height: `${item.height}px`,
+  };
+};

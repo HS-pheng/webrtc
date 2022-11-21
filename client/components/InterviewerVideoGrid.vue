@@ -1,27 +1,24 @@
 <template>
-  <div class="flex flex-col gap-4 border-3">
-    <h3 class="text-center">Interviewers</h3>
-    <div class="flex flex-wrap gap-4">
-      <LocalVideo v-if="props.isInterviewer" />
-      <Peer
-        v-for="[peerId, peer] in ps.peers"
-        :key="peerId"
-        :tracks="extractTracks(peer.consumers)"
-        :peer-info="peer.peerInfo"
-      />
-    </div>
+  <div class="flex justify-center gap-10px p-10px">
+    <LocalVideo v-if="isInterviewer" :style="interviewerStyle" />
+    <Peer
+      v-for="(peer, index) in interviewers"
+      :key="index"
+      :tracks="extractTracks(peer.consumers)"
+      :peer-info="peer.peerInfo"
+      :style="interviewerStyle"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Consumer } from 'mediasoup-client/lib/Consumer';
-import { usePeerStore } from '~~/stores/usePeerStore';
-const ps = usePeerStore();
+import { IPeer } from '~~/constants/types';
+import { extractTracks } from '~~/utils/utils';
 
-const props = defineProps<{
-  isInterviewer: boolean;
+const isInterviewer = inject('isInterviewer');
+
+defineProps<{
+  interviewers: IPeer[];
+  interviewerStyle;
 }>();
-
-const extractTracks = (consumers: Consumer[]) =>
-  consumers.map((consumer) => consumer.track);
 </script>

@@ -6,7 +6,7 @@
     </div>
     <div v-else class="flex flex-col">
       <div class="border-3">
-        <VideoScreen :peers="peers" :is-interviewer="isInterviewer" />
+        <VideoScreen :peers="peers" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
         <CandidateList
@@ -31,13 +31,15 @@ const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
 
 const route = useRoute();
-const isInterviewer = computed(() => route?.query.interviewer === 'true');
 const interviewFinished = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
+const isInterviewer = computed(() => route?.query.interviewer === 'true');
+provide('isInterviewer', isInterviewer);
+
 const localMedia = useLocalMedia();
-provide('localVideo', localMedia.videoTrack);
+provide('localVideoTrack', localMedia.videoTrack);
 
 const joinInterviewRoom = async () => {
   await localMedia.getMedia();

@@ -1,36 +1,17 @@
 <template>
   <div ref="screen" class="w-full h-35rem flex-col">
-    <div class="flex justify-center gap-10px p-10px">
-      <LocalVideo v-if="isInterviewer" :style="interviewerStyle" />
-      <Peer
-        v-for="(peer, index) in interviewers"
-        :key="index"
-        :tracks="extractTracks(peer.consumers)"
-        :peer-info="peer.peerInfo"
-        :style="interviewerStyle"
-      />
-    </div>
-    <div>
-      <LocalVideo
-        v-if="!isInterviewer"
-        :style="candidateStyle"
-        class="m-auto"
-      />
-      <Peer
-        v-if="candidate"
-        :tracks="extractTracks(candidate.consumers)"
-        :peer-info="candidate.peerInfo"
-        :style="candidateStyle"
-        class="m-auto"
-      />
-    </div>
+    <InterviewerVideoGrid
+      :interviewers="interviewers"
+      :interviewer-style="interviewerStyle"
+    />
+    <CandidateVideo :candidate="candidate" :candidate-style="candidateStyle" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { IPeer } from '~~/constants/types';
-import { calcViewlayout, extractTracks } from '~~/utils/utils';
-const props = defineProps<{ peers: IPeer[]; isInterviewer: boolean }>();
+import { calcViewlayout, extractItemStyle } from '~~/utils/utils';
+const props = defineProps<{ peers: IPeer[] }>();
 
 const interviewers = computed(() =>
   props.peers.filter((peer) => peer.peerInfo.isInterviewer === 'true'),
@@ -74,13 +55,5 @@ function render() {
   }
   interviewerStyle.value = extractItemStyle(items[1]);
   candidateStyle.value = extractItemStyle(items[0]);
-}
-
-function extractItemStyle(item) {
-  return {
-    visibility: 'visible',
-    width: `${item.width}px`,
-    height: `${item.height}px`,
-  };
 }
 </script>
