@@ -17,10 +17,9 @@
         class="m-auto"
       />
       <Peer
-        v-for="(peer, index) in candidate"
-        :key="index"
-        :tracks="extractTracks(peer.consumers)"
-        :peer-info="peer.peerInfo"
+        v-if="candidate"
+        :tracks="extractTracks(candidate.consumers)"
+        :peer-info="candidate.peerInfo"
         :style="candidateStyle"
         class="m-auto"
       />
@@ -38,7 +37,7 @@ const interviewers = computed(() =>
 );
 
 const candidate = computed(() =>
-  props.peers.filter((peer) => peer.peerInfo.isInterviewer === 'false'),
+  props.peers.find((peer) => peer.peerInfo.isInterviewer === 'false'),
 );
 
 const interviewerStyle = ref({ visibility: 'hidden' });
