@@ -9,7 +9,7 @@
       ref="video"
       autoplay
       playsinline
-      class="transform bg-gray-500 object-fit -z-1 m-auto"
+      class="transform bg-gray-500 -z-1 m-auto h-full w-full object-cover"
     ></video>
   </div>
 </template>
