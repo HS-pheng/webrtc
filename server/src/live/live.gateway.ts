@@ -113,8 +113,8 @@ export class LiveGateway
   // ---------- mediasoup endpoints --------------
   @SubscribeMessage(GatewayEvents.SETUP_TRANSPORT)
   async setupTransport(
-    @MessageBody() body: { setUpMode: string },
-    @ConnectedSocket() client,
+    @MessageBody() body: { setUpMode: 'send' | 'recv' | 'both' },
+    @ConnectedSocket() client: Socket,
   ) {
     const { setUpMode } = body;
     const setUpParams = await this.msService.setupTransport(setUpMode, client);
@@ -122,14 +122,14 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.CONNECT_TRANSPORT)
-  async connectTransport(@MessageBody() body): Promise<boolean> {
+  async connectTransport(@MessageBody() body: any): Promise<boolean> {
     const { dtlsParameters, transportId } = body;
     return this.msService.connectTransport(dtlsParameters, transportId);
   }
 
   @SubscribeMessage(GatewayEvents.PRODUCE)
   async produce(
-    @MessageBody() body,
+    @MessageBody() body: any,
     @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
     const { transportId, ...params } = body;
@@ -152,7 +152,7 @@ export class LiveGateway
 
   @SubscribeMessage(GatewayEvents.JOIN_INTERVIEW_ROOM)
   async transportConsume(
-    @MessageBody() body,
+    @MessageBody() body: any,
     @ConnectedSocket() client: Socket,
   ) {
     const { rtpCapabilities, transportId } = body;
@@ -160,7 +160,10 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.GET_NEW_PRODUCER)
-  async getNewProducer(@MessageBody() body, @ConnectedSocket() client: Socket) {
+  async getNewProducer(
+    @MessageBody() body: any,
+    @ConnectedSocket() client: Socket,
+  ) {
     const { producerId, rtpCapabilities, transportId } = body;
     return this.msService.getNewProducer(
       producerId,
@@ -171,7 +174,7 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.RESUME_CONSUMER)
-  async resumeConsumer(@MessageBody() body): Promise<boolean> {
+  async resumeConsumer(@MessageBody() body: any): Promise<boolean> {
     const { consumerId } = body;
     return this.msService.resumeConsumer(consumerId);
   }

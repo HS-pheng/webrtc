@@ -55,10 +55,11 @@ export class SocketService {
       .in(interviewerGroup)
       .in(currentCandidateSocketId)
       .fetchSockets();
-    const peersInfo = {};
+    const peersInfo: { [socketId: string]: any } = {};
     socketsInInterviewRoom.forEach((socket) => {
       if (socket.id !== client.id)
-        peersInfo[socket.id] = socket.data.handshakeData;
+        peersInfo[socket.id as keyof typeof peersInfo] =
+          socket.data.handshakeData;
     });
     return peersInfo as { [peerId: string]: IPeerInfo };
   }
