@@ -9,7 +9,7 @@
       ref="localVideo"
       autoplay
       playsinline
-      class="transform bg-gray-500 m-auto -z-1 h-full w-full object-cover"
+      class="transform rotate-y-180 bg-gray-500 m-auto -z-1 h-full w-full object-cover"
     ></video>
   </div>
 </template>
@@ -22,7 +22,7 @@ const localStream = ref<MediaStream | null>(null);
 
 onMounted(() => {
   localStream.value = new MediaStream();
-  localVideo.value.srcObject = localStream.value;
+  localVideo.value!.srcObject = localStream.value;
 });
 
 watchEffect(() => {

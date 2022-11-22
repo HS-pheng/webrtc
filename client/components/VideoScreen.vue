@@ -3,8 +3,17 @@
     <InterviewerVideoGrid
       :interviewers="interviewers"
       :interviewer-style="interviewerStyle"
-    />
-    <CandidateVideo :candidate="candidate" :candidate-style="candidateStyle" />
+    >
+      <LocalVideo v-if="isInterviewer" :style="interviewerStyle" />
+    </InterviewerVideoGrid>
+
+    <CandidateVideo :candidate="candidate" :candidate-style="candidateStyle">
+      <LocalVideo
+        v-if="!isInterviewer"
+        :style="candidateStyle"
+        class="m-auto"
+      />
+    </CandidateVideo>
   </div>
 </template>
 
@@ -12,6 +21,9 @@
 import { IPeer } from '~~/constants/types';
 import { calcViewlayout, extractItemStyle } from '~~/utils/utils';
 const props = defineProps<{ peers: IPeer[] }>();
+
+// isInterviewer: Ref<boolean>
+const isInterviewer = inject('isInterviewer');
 
 const interviewers = computed(() =>
   props.peers.filter((peer) => peer.peerInfo.isInterviewer === 'true'),

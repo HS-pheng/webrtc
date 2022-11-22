@@ -1,10 +1,10 @@
 <template>
   <div>
-    <LocalVideo v-if="!isInterviewer" :style="candidateStyle" class="m-auto" />
+    <slot />
     <Peer
       v-if="candidate"
       :tracks="extractTracks(candidate.consumers)"
-      :peer-info="candidate.peerInfo"
+      :peer-info="candidate?.peerInfo"
       :style="candidateStyle"
       class="m-auto"
     />
@@ -15,11 +15,8 @@
 import { IPeer } from '~~/constants/types';
 import { extractTracks } from '~~/utils/utils';
 
-// isInterviewer: Ref<boolean>
-const isInterviewer = inject('isInterviewer');
-
 defineProps<{
-  candidate: IPeer;
-  candidateStyle;
+  candidate: IPeer | undefined;
+  candidateStyle: any;
 }>();
 </script>

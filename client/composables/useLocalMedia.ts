@@ -12,8 +12,8 @@ export function useLocalMedia() {
   };
 
   const stopMedia = () => {
-    videoTrack.value.stop();
-    audioTrack.value.stop();
+    videoTrack.value?.stop();
+    audioTrack.value?.stop();
   };
 
   return { videoTrack, audioTrack, getMedia, stopMedia };

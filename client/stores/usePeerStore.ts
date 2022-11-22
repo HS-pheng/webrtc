@@ -8,8 +8,8 @@ export const usePeerStore = defineStore('peerStore', () => {
   const addPeerConsumer = (consumer: Consumer) => {
     const peerId = consumer.appData.producerClientId as string;
     const peer = peers.value.get(peerId);
-    peer.consumers.push(consumer);
-    peers.value.set(peerId, peer);
+    peer!.consumers.push(consumer);
+    peers.value.set(peerId, peer!);
   };
 
   const addPeerInfo = (peerInfo: IPeerInfo, peerId: string) => {
@@ -20,7 +20,7 @@ export const usePeerStore = defineStore('peerStore', () => {
     peers.value.set(peerId, peer);
   };
 
-  const removePeer = (producerClientId) => {
+  const removePeer = (producerClientId: string) => {
     const peer = peers.value.get(producerClientId);
     peer?.consumers && peer.consumers.forEach((consumer) => consumer.close());
     peers.value.delete(producerClientId);

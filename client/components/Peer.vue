@@ -25,7 +25,7 @@ const props = defineProps<{
 
 onMounted(() => {
   stream.value = new MediaStream();
-  video.value.srcObject = stream.value;
+  video.value!.srcObject = stream.value;
 });
 
 const tracks = computed(() => props.tracks);

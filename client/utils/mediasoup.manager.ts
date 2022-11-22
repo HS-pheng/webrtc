@@ -19,7 +19,7 @@ export class MsManager {
     try {
       this.device = new Device();
     } catch (err) {
-      throw new Error(err);
+      throw new Error(err as any);
     }
   }
 
@@ -28,26 +28,30 @@ export class MsManager {
   }
 
   async init(setUpMode: string) {
-    const setUpParams = await this.socket.request('setup-transport', {
+    const setUpParams = await this.socket?.request('setup-transport', {
       setUpMode,
     });
     await this.setUpTransport(setUpParams);
   }
 
-  async setUpTransport(setUpParams) {
-    if (!this.device.loaded) {
-      await this.device.load({
+  async setUpTransport(setUpParams: {
+    sendTransport: any;
+    recvTransport: any;
+    rtpCapabilities: any;
+  }) {
+    if (!this.device?.loaded) {
+      await this.device?.load({
         routerRtpCapabilities: setUpParams.rtpCapabilities,
       });
     }
     if (setUpParams.sendTransport) {
-      this.sendTransport = this.device.createSendTransport(
+      this.sendTransport = this.device!.createSendTransport(
         setUpParams.sendTransport,
       );
       this.attachTransportEventListener('send');
     }
     if (setUpParams.recvTransport) {
-      this.recvTransport = this.device.createRecvTransport(
+      this.recvTransport = this.device!.createRecvTransport(
         setUpParams.recvTransport,
       );
       this.attachTransportEventListener('recv');
@@ -58,14 +62,14 @@ export class MsManager {
     let targetTransport = this.recvTransport;
     if (type === 'send') {
       targetTransport = this.sendTransport;
-      targetTransport.on(
+      targetTransport!.on(
         'produce',
         async ({ kind, rtpParameters, appData }, callback, errback) => {
           try {
-            const id = await this.socket.request('produce', {
+            const id = await this.socket!.request('produce', {
               kind,
               rtpParameters,
-              transportId: targetTransport.id,
+              transportId: targetTransport!.id,
               appData,
             });
 
@@ -73,34 +77,34 @@ export class MsManager {
             // eslint-disable-next-line n/no-callback-literal
             callback({ id });
           } catch (e) {
-            errback(e);
+            errback(e as any);
           }
         },
       );
     }
-    targetTransport.on(
+    targetTransport!.on(
       'connect',
       async ({ dtlsParameters }, callback, errback) => {
         try {
-          const success = await this.socket.request('connect-transport', {
+          const success = await this.socket!.request('connect-transport', {
             dtlsParameters,
-            transportId: targetTransport.id,
+            transportId: targetTransport!.id,
           });
           if (!success) throw new Error('connection failed');
           callback();
         } catch (e) {
-          errback(e);
+          errback(e as any);
         }
       },
     );
   }
 
   async getPeersMSConsumers() {
-    const peerProducers: ICreateConsumer[] = await this.socket.request(
+    const peerProducers: ICreateConsumer[] = await this.socket!.request(
       'join-interview-room',
       {
-        rtpCapabilities: this.device.rtpCapabilities,
-        transportId: this.recvTransport.id,
+        rtpCapabilities: this.device!.rtpCapabilities,
+        transportId: this.recvTransport!.id,
       },
     );
 
@@ -111,16 +115,16 @@ export class MsManager {
     const produceData = { track };
 
     if (track.kind === 'audio') {
-      this.audioProducer = await this.sendTransport.produce(produceData);
+      this.audioProducer = await this.sendTransport!.produce(produceData);
       return;
     }
 
     Object.assign(produceData, producerOptions);
-    this.videoProducer = await this.sendTransport.produce(produceData);
+    this.videoProducer = await this.sendTransport!.produce(produceData);
   }
 
   createConsumer(params: ICreateConsumer) {
-    return this.recvTransport.consume(params);
+    return this.recvTransport!.consume(params);
   }
 
   // --- peer logic ---
@@ -129,7 +133,7 @@ export class MsManager {
     const consumers = peerProducers.map(async (producer) => {
       const consumer = await this.createConsumer(producer);
 
-      await this.socket.request('resume-consumer', {
+      await this.socket!.request('resume-consumer', {
         consumerId: producer.id,
       });
 
@@ -139,19 +143,19 @@ export class MsManager {
     return Promise.all(consumers);
   }
 
-  async handleNewPeerProducer(producerId) {
-    const params: ICreateConsumer = await this.socket.request(
+  async handleNewPeerProducer(producerId: string) {
+    const params: ICreateConsumer = await this.socket!.request(
       'get-new-producer',
       {
         producerId,
-        rtpCapabilities: this.device.rtpCapabilities,
-        transportId: this.recvTransport.id,
+        rtpCapabilities: this.device!.rtpCapabilities,
+        transportId: this.recvTransport!.id,
       },
     );
 
     const consumer = await this.createConsumer(params);
 
-    await this.socket.request('resume-consumer', {
+    await this.socket!.request('resume-consumer', {
       consumerId: consumer.id,
     });
 

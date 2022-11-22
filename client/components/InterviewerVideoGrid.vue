@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center gap-10px p-10px">
-    <LocalVideo v-if="isInterviewer" :style="interviewerStyle" />
+    <slot />
     <Peer
       v-for="(peer, index) in interviewers"
       :key="index"
@@ -15,11 +15,8 @@
 import { IPeer } from '~~/constants/types';
 import { extractTracks } from '~~/utils/utils';
 
-// isInterviewer: Ref<boolean>
-const isInterviewer = inject('isInterviewer');
-
 defineProps<{
   interviewers: IPeer[];
-  interviewerStyle;
+  interviewerStyle: any;
 }>();
 </script>
