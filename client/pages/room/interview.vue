@@ -16,6 +16,7 @@
         <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
     </div>
+    <MediaControllerBar />
   </div>
 </template>
 
