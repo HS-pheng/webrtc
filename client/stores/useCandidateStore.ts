@@ -1,20 +1,24 @@
 import { defineStore } from 'pinia';
-import { NO_CURRENT_CANDIDATE } from '~~/constants/message';
+import { EMPTY_CANDIDATE } from '~~/constants/constant';
+import { candidateInfo } from '~~/constants/types';
 
 export const useCandidateStore = defineStore('candidateStore', () => {
-  const candidateList = ref<string[]>([]);
-  const currentCandidate = ref<string>(NO_CURRENT_CANDIDATE);
+  const candidateList = ref<candidateInfo[]>([]);
+  const currentCandidate = ref<candidateInfo>(EMPTY_CANDIDATE);
 
-  const init = (candidates: string[]) => {
+  const init = (candidates: candidateInfo[]) => {
     candidateList.value = candidates;
   };
 
-  const push = (newCandidate: string) => {
+  const push = (newCandidate: candidateInfo) => {
     candidateList.value.push(newCandidate);
   };
 
-  const remove = (candidate: string) => {
-    const index = candidateList.value.indexOf(candidate);
+  const remove = (candidateId: string) => {
+    const index = candidateList.value.findIndex(
+      (candidate) => candidate.id === candidateId,
+    );
+
     if (index >= 0) {
       candidateList.value.splice(index, 1);
     }
@@ -33,7 +37,7 @@ export const useCandidateStore = defineStore('candidateStore', () => {
   };
 
   const removeCurrentCandidate = () => {
-    currentCandidate.value = NO_CURRENT_CANDIDATE;
+    currentCandidate.value = EMPTY_CANDIDATE;
   };
 
   return {

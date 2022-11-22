@@ -6,7 +6,7 @@
     </div>
     <div v-else class="flex m-4 flex-col">
       <div class="mx-auto flex flex-row gap-4">
-        <LocalVideo :video-track="localVideoTrack" />
+        <LocalVideo :video-track="localMedia.videoTrack.value" />
         <RemotePeers v-if="hasRemotePeer" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
@@ -37,21 +37,17 @@ const interviewFinished = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
-const localVideoTrack = ref<MediaStreamTrack | null>(null);
-const localAudioTrack = ref<MediaStreamTrack | null>(null);
+const localMedia = useLocalMedia();
 
 const joinInterviewRoom = async () => {
-  const { videoTrack, audioTrack } = await useLocalMedia();
+  await localMedia.getMedia();
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await $msManager.createProducer(videoTrack);
-  await $msManager.createProducer(audioTrack);
+  await $msManager.createProducer(localMedia.videoTrack.value);
+  await $msManager.createProducer(localMedia.audioTrack.value);
 
   await interviewManager.loadPeersInfo();
-  await $msManager.loadPeersMSConsumers();
-
-  localVideoTrack.value = videoTrack;
-  localAudioTrack.value = audioTrack;
+  await loadPeersConsumers();
 };
 
 const renderCandidateList = async () => {
@@ -62,6 +58,13 @@ const renderCandidateList = async () => {
 const requestNextCandidate = () => {
   if (connected.value) interviewManager.requestNextCandidate();
 };
+
+async function loadPeersConsumers() {
+  const consumers = await $msManager.getPeersMSConsumers();
+  consumers.forEach((consumer) => peerStore.addPeerConsumer(consumer));
+}
+
+const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 
 whenever(
   connected,
@@ -75,25 +78,20 @@ whenever(
   { immediate: true },
 );
 
-onUnmounted(() => {
-  stopTrack();
-  disconnectSocket();
-  peerStore.destroyPeers();
-});
-
-function stopTrack() {
-  localVideoTrack.value?.stop();
-  localAudioTrack.value?.stop();
-}
+onUnmounted(disconnectionCleanup);
 
 function attachInterviewEventListener() {
   interviewEventListener.on((event) => {
     if (event === 'interview-finished') {
       interviewFinished.value = true;
-      stopTrack();
+      disconnectionCleanup();
     }
   });
 }
 
-const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
+function disconnectionCleanup() {
+  localMedia.stopMedia();
+  disconnectSocket();
+  peerStore.destroyPeers();
+}
 </script>

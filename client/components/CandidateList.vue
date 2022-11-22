@@ -5,25 +5,27 @@
       <ul>
         <p v-if="candidateList.length === 0">No candidate</p>
         <div>
-          <li v-for="(name, index) in candidateList" :key="name">
-            {{ index + 1 }}. {{ name }}
+          <li v-for="(candidate, index) in candidateList" :key="candidate.id">
+            {{ index + 1 }}. {{ candidate.username }}
           </li>
         </div>
       </ul>
     </div>
     <div class="border-3 mt-3 mb-3 p-3 flex-grow">
       <p>Current candidate</p>
-      <p>{{ currentCandidate }}</p>
+      <p>{{ currentCandidateName }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { candidateInfo } from '~~/constants/types';
+
 const props = defineProps<{
-  candidateList: string[];
-  currentCandidate: string;
+  candidateList: candidateInfo[];
+  currentCandidate: candidateInfo;
 }>();
 
 const candidateList = computed(() => props.candidateList);
-const currentCandidate = computed(() => props.currentCandidate);
+const currentCandidateName = computed(() => props.currentCandidate.username);
 </script>

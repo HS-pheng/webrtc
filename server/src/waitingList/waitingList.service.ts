@@ -1,22 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { candidateInfo } from 'src/constants/types';
 import { Queue } from 'src/utils/utils';
 
 @Injectable()
 export class WaitingListService {
-  waitingList = new Queue<string>();
-  currentCandidate: string = null;
+  waitingList = new Queue<candidateInfo>();
+  currentCandidate: candidateInfo = null;
 
   getWaitingList() {
     return this.waitingList.content;
   }
 
-  addToWaitingList(clientId: string) {
-    this.waitingList.push(clientId);
+  addToWaitingList(candidate: candidateInfo) {
+    this.waitingList.push(candidate);
     return this.waitingList.content;
   }
 
-  removeCandidate(clientId: string) {
-    return this.waitingList.remove(clientId);
+  removeCandidate(candidateId: string) {
+    return this.waitingList.removeBy('id', candidateId);
   }
 
   getNextCandidate() {

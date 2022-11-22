@@ -15,7 +15,7 @@ import { interviewerGroup, candidateGroup } from 'src/socket/socket.constant';
 import { LiveService } from './live.service';
 import { GatewayEvents } from 'src/constants/events';
 import { CommunicationEvents } from 'src/constants/events';
-import { IPeerInfo } from 'src/constants/types';
+import { candidateInfo, IPeerInfo } from 'src/constants/types';
 import { extrackHandshakeData } from 'src/utils/utils';
 
 @WebSocketGateway({
@@ -60,7 +60,12 @@ export class LiveGateway
     if (type === 'interviewer') {
       return client.join(interviewerGroup);
     }
-    this.waitingListService.addToWaitingList(client.id);
+
+    const candidateInfo: candidateInfo = {
+      id: client.id,
+      username: client.data.handshakeData.username,
+    };
+    this.waitingListService.addToWaitingList(candidateInfo);
     await client.join(candidateGroup);
     await this.liveService.announceNewCandidate(client);
   }
@@ -86,7 +91,8 @@ export class LiveGateway
 
   @SubscribeMessage(GatewayEvents.LEAVE_WAITING_LIST)
   removeFromWaitingList(@ConnectedSocket() client: Socket) {
-    this.waitingListService.removeCandidate(client.id);
+    const candidateId = client.id;
+    this.waitingListService.removeCandidate(candidateId);
 
     this.socketService.updateCandidateStatistics(
       this.waitingListService.getWaitingList(),
