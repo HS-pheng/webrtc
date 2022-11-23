@@ -8,24 +8,27 @@ export function useInterviewManager() {
   const peerStore = usePeerStore();
 
   const requestNextCandidate = () => {
-    socketStore.socket.emit(InterviewRequests.NEXT_CANDIDATE, {});
+    socketStore.socket!.emit(InterviewRequests.NEXT_CANDIDATE, {});
   };
 
   const getCandidateList = (): Promise<candidateInfo[]> => {
-    return socketStore.socket.request(InterviewRequests.GET_CANDIDATE_LIST, {});
+    return socketStore.socket!.request(
+      InterviewRequests.GET_CANDIDATE_LIST,
+      {},
+    );
   };
 
   const joinGroup = (type: 'interviewer' | 'candidate') => {
-    socketStore.socket.emit(InterviewRequests.JOIN_GROUP, type);
+    socketStore.socket!.emit(InterviewRequests.JOIN_GROUP, type);
   };
 
   const leaveWaitingList = () => {
-    socketStore.socket.emit(InterviewRequests.LEAVE_WAITING_LIST);
+    socketStore.socket!.emit(InterviewRequests.LEAVE_WAITING_LIST);
   };
 
   const loadPeersInfo = async () => {
     const peersInfo: { [peerId: string]: IPeerInfo } =
-      await socketStore.socket.request(InterviewRequests.GET_PEERS_INFO, {});
+      await socketStore.socket!.request(InterviewRequests.GET_PEERS_INFO, {});
 
     console.log(peersInfo);
 

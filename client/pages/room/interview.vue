@@ -15,8 +15,8 @@
         />
         <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
+      <MediaControllerBar @media-state-change="handleMediaStateChange" />
     </div>
-    <MediaControllerBar />
   </div>
 </template>
 
@@ -43,18 +43,26 @@ const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
 
 const joinInterviewRoom = async () => {
-  await localMedia.getMedia();
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await $msManager.createProducer(
-    localMedia.videoTrack.value as MediaStreamTrack,
-  );
-  await $msManager.createProducer(
-    localMedia.audioTrack.value as MediaStreamTrack,
-  );
+  await produceMedia('audio');
+  await produceMedia('video');
 
   await interviewManager.loadPeersInfo();
   await loadPeersConsumers();
+};
+
+const produceMedia = async (type: 'audio' | 'video') => {
+  await localMedia.getMedia(type);
+  if (type === 'video') {
+    await $msManager.createProducer(
+      localMedia.videoTrack.value as MediaStreamTrack,
+    );
+  } else {
+    await $msManager.createProducer(
+      localMedia.audioTrack.value as MediaStreamTrack,
+    );
+  }
 };
 
 const renderCandidateList = async () => {
@@ -95,9 +103,10 @@ function attachInterviewEventListener() {
 }
 
 function disconnectionCleanup() {
-  localMedia.stopMedia();
+  localMedia.stopMedia('both');
   disconnectSocket();
   peerStore.destroyPeers();
+  $msManager.closeTransports();
 }
 
 const peers = computed(() => {
@@ -107,4 +116,16 @@ const peers = computed(() => {
   }
   return peers;
 });
+
+const handleMediaStateChange = async (
+  mediaType: 'video' | 'audio',
+  status: string,
+) => {
+  if (status === 'off') {
+    localMedia.stopMedia(mediaType);
+    $msManager.closeProducer(mediaType);
+    return;
+  }
+  await produceMedia(mediaType);
+};
 </script>

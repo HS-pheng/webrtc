@@ -1,29 +1,31 @@
 <template>
   <div class="flex justify-center mt-10px gap-30px">
     <Icon
-      :name="mic[deviceState.mic as keyof typeof mic]"
+      :name="mic[deviceState.audio as keyof typeof mic]"
       size="50px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.MIC)"
+      @click="toggleState(MEDIA_DEVICE_TYPE.AUDIO)"
     />
     <Icon
-      :name="cam[deviceState.cam as keyof typeof cam]"
+      :name="cam[deviceState.video as keyof typeof cam]"
       size="50px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.CAM)"
+      @click="toggleState(MEDIA_DEVICE_TYPE.VIDEO)"
     />
     <Icon
-      :name="screen[deviceState.screen as keyof typeof screen]"
+      :name="screen[deviceState.display as keyof typeof screen]"
       size="50px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.SCREEN)"
+      @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
     />
     <Icon name="material-symbols:call-end-outline" size="50px" />
   </div>
 </template>
 
 <script lang="ts" setup>
+const emit = defineEmits(['mediaStateChange']);
+
 const MEDIA_DEVICE_TYPE = {
-  MIC: 'mic',
-  CAM: 'cam',
-  SCREEN: 'screen',
+  AUDIO: 'audio',
+  VIDEO: 'video',
+  DISPLAY: 'display',
 };
 
 const mic = {
@@ -42,9 +44,9 @@ const screen = {
 };
 
 const deviceState = ref({
-  mic: 'on',
-  cam: 'on',
-  screen: 'off',
+  audio: 'on',
+  video: 'on',
+  display: 'off',
 });
 
 const toggleState = (deviceType: string) => {
@@ -52,5 +54,11 @@ const toggleState = (deviceType: string) => {
     deviceState.value[deviceType as keyof typeof deviceState.value] === 'on'
       ? 'off'
       : 'on';
+
+  emit(
+    'mediaStateChange',
+    deviceType,
+    deviceState.value[deviceType as keyof typeof deviceState.value],
+  );
 };
 </script>

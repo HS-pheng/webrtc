@@ -27,7 +27,7 @@ export function useSocketConnection() {
 
       const { username, isInterviewer } = handshakePayload;
       socketStore.connect({ username, isInterviewer });
-      socketStore.socket.on('connect', () => {
+      socketStore.socket!.on('connect', () => {
         connected.value = true;
       });
       socket.value = socketStore.socket;
@@ -40,14 +40,14 @@ export function useSocketConnection() {
   });
 
   function subscribeInterviewerEventListener() {
-    socket.value.on(
+    socket.value!.on(
       CommunicationEvents.ADD_TO_WAITING,
       (candidate: candidateInfo) => {
         candidateStore.push(candidate);
       },
     );
 
-    socket.value.on(
+    socket.value!.on(
       CommunicationEvents.CANDIDATE_CLOSED,
       (candidateId: string) => {
         candidateStore.remove(candidateId);
@@ -56,25 +56,25 @@ export function useSocketConnection() {
       },
     );
 
-    socket.value.on(
+    socket.value!.on(
       CommunicationEvents.REMOVE_FROM_WAITING,
       (candidateId: string) => {
         candidateStore.remove(candidateId);
       },
     );
 
-    socket.value.on(CommunicationEvents.NEXT_CANDIDATE, () => {
+    socket.value!.on(CommunicationEvents.NEXT_CANDIDATE, () => {
       candidateStore.currentCandidate = candidateStore.front();
       candidateStore.shift();
     });
 
-    socket.value.on(CommunicationEvents.NO_CANDIDATE, () => {
+    socket.value!.on(CommunicationEvents.NO_CANDIDATE, () => {
       candidateStore.currentCandidate = EMPTY_CANDIDATE;
     });
   }
 
   function subscribeCandidateEventListener() {
-    socket.value.on(CommunicationEvents.READY_FOR_INTERVIEW, () => {
+    socket.value!.on(CommunicationEvents.READY_FOR_INTERVIEW, () => {
       return navigateTo({
         path: '/room/interview',
         query: {
@@ -83,11 +83,11 @@ export function useSocketConnection() {
       });
     });
 
-    socket.value.on(CommunicationEvents.CANDIDATE_STATISTIC, (stats) => {
+    socket.value!.on(CommunicationEvents.CANDIDATE_STATISTIC, (stats) => {
       waitingStore.updateStats(stats);
     });
 
-    socket.value.on(CommunicationEvents.INTERVIEW_FINISHED, () => {
+    socket.value!.on(CommunicationEvents.INTERVIEW_FINISHED, () => {
       const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
       interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
       $msManager.closeTransports();
@@ -95,7 +95,7 @@ export function useSocketConnection() {
   }
 
   function subscribeGeneralEventListener() {
-    socket.value.on(
+    socket.value!.on(
       CommunicationEvents.NEW_PEER_INFO,
       (peer: { id: string; info: IPeerInfo }) => {
         peerStore.addPeerInfo(peer.info, peer.id);
@@ -104,19 +104,19 @@ export function useSocketConnection() {
   }
 
   function subscribeMediaSoupListener() {
-    socket.value.on(MsEvents.NEW_PRODUCER, async (producerId) => {
+    socket.value!.on(MsEvents.NEW_PRODUCER, async (producerId) => {
       const consumer = await $msManager.handleNewPeerProducer(producerId);
       peerStore.addPeerConsumer(consumer);
     });
 
-    socket.value.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
+    socket.value!.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
       peerStore.removePeer(producerClientId);
     });
   }
 
   function disconnectSocket() {
     socketStore.connected = false;
-    socket.value.disconnect();
+    socket.value!.disconnect();
   }
 
   return { socket, disconnectSocket, connected };

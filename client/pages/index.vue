@@ -34,7 +34,7 @@ const joinAsCandidate: any = () => {
   return navigateTo('/room/wait');
 };
 
-const onNameChange = (event) => {
+const onNameChange = (event: any) => {
   handshakePayload.username = event.target.value;
 };
 </script>
