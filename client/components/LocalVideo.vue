@@ -27,6 +27,8 @@ onMounted(() => {
 
 watchEffect(() => {
   if (localStream.value && localVideoTrack.value) {
+    const previousTrack = localStream.value.getVideoTracks()[0];
+    previousTrack && localStream.value.removeTrack(previousTrack);
     localStream.value.addTrack(localVideoTrack.value);
   }
 });
