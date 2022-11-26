@@ -15,12 +15,16 @@
       size="50px"
       @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
     />
-    <Icon name="material-symbols:call-end-outline" size="50px" />
+    <Icon
+      name="material-symbols:call-end-outline"
+      size="50px"
+      @click="handleLeaveCall"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-const emit = defineEmits(['mediaStateChange']);
+const emit = defineEmits(['mediaStateChange', 'leaveCall']);
 
 const MEDIA_DEVICE_TYPE = {
   AUDIO: 'audio',
@@ -60,5 +64,10 @@ const toggleState = (deviceType: string) => {
     deviceType,
     deviceState.value[deviceType as keyof typeof deviceState.value],
   );
+};
+
+const handleLeaveCall = () => {
+  emit('leaveCall');
+  return navigateTo('/');
 };
 </script>

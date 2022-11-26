@@ -15,7 +15,10 @@
         />
         <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
-      <MediaControllerBar @media-state-change="handleMediaStateChange" />
+      <MediaControllerBar
+        @media-state-change="handleMediaStateChange"
+        @leave-call="disconnectionCleanup"
+      />
     </div>
   </div>
 </template>
