@@ -124,13 +124,25 @@ export class MsManager {
     console.log('producer id: ', this.videoProducer.id);
   }
 
-  closeProducer(type: 'video' | 'audio') {
-    if (type === 'video') this.videoProducer?.close();
-    else this.audioProducer?.close();
-  }
-
   createConsumer(params: ICreateConsumer) {
     return this.recvTransport!.consume(params);
+  }
+
+  async toggleMediaProducer(
+    mediaType: 'audio' | 'video',
+    track: MediaStreamTrack | null,
+  ) {
+    const producer =
+      mediaType === 'video' ? this.videoProducer : this.audioProducer;
+
+    if (producer!.paused) {
+      await producer?.replaceTrack({ track });
+      producer?.resume();
+    } else {
+      producer?.pause();
+    }
+
+    return producer!.id;
   }
 
   // --- peer logic ---

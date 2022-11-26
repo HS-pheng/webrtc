@@ -28,6 +28,7 @@ const { $msManager } = useNuxtApp();
 const { connected, disconnectSocket } = useSocketConnection();
 
 const interviewManager = useInterviewManager();
+const signalingManager = useSignaling();
 const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
 
@@ -119,13 +120,21 @@ const peers = computed(() => {
 
 const handleMediaStateChange = async (
   mediaType: 'video' | 'audio',
-  status: string,
+  status: 'on' | 'off',
 ) => {
-  if (status === 'off') {
+  if (status === 'on') {
+    await localMedia.getMedia(mediaType);
+  } else {
     localMedia.stopMedia(mediaType);
-    $msManager.closeProducer(mediaType);
-    return;
   }
-  await produceMedia(mediaType);
+
+  const track =
+    mediaType === 'video'
+      ? localMedia.videoTrack.value
+      : localMedia.audioTrack.value;
+
+  const producerId = await $msManager.toggleMediaProducer(mediaType, track);
+
+  signalingManager.signalMediaStateChanged(producerId, status);
 };
 </script>

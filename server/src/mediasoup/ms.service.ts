@@ -229,6 +229,27 @@ export class MsService {
     };
   }
 
+  async toggleAssociatedConsumers(
+    producerId: string,
+    status: 'on' | 'off',
+    client: Socket,
+  ) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
+
+    if (producer.appData.uid !== client.id) return;
+
+    for (const [, consumer] of this.router.appData.consumers as Map<
+      string,
+      Consumer
+    >) {
+      if (consumer.producerId === producerId) {
+        status === 'on' ? await consumer.resume() : await consumer.pause();
+      }
+    }
+  }
+
   async resumeConsumer(consumerId: string) {
     const consumer = (
       this.router.appData.consumers as Map<string, Consumer>
@@ -241,8 +262,6 @@ export class MsService {
     }
     return true;
   }
-
-  // closeProducerById()
 
   closeUserTransports(clientId: string) {
     for (const [transportId, transport] of this.router.appData

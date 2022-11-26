@@ -173,6 +173,26 @@ export class LiveGateway
     );
   }
 
+  @SubscribeMessage(GatewayEvents.MEDIA_STATE_CHANGED)
+  async toggleMediaProducer(
+    @MessageBody() body: { producerId: string; status: 'on' | 'off' },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { producerId, status } = body;
+
+    await this.msService.toggleAssociatedConsumers(producerId, status, client);
+
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      CommunicationEvents.PEER_PRODUCER_STATE_CHANGED,
+      {
+        peerId: client.id,
+        producerId,
+        status,
+      },
+    );
+  }
+
   @SubscribeMessage(GatewayEvents.RESUME_CONSUMER)
   async resumeConsumer(@MessageBody() body: any): Promise<boolean> {
     const { consumerId } = body;

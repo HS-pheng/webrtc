@@ -26,4 +26,5 @@ export const BusEvents = {
 export const MsEvents = {
   NEW_PRODUCER: 'new-producer',
   PRODUCER_CLOSED: 'producer-closed',
+  PEER_PRODUCER_STATE_CHANGED: 'peer-producer-state-changed',
 };

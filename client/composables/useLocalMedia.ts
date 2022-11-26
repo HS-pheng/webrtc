@@ -3,19 +3,14 @@ export function useLocalMedia() {
   const audioTrack = ref<MediaStreamTrack | null>(null);
 
   const getMedia = async (type: 'both' | 'audio' | 'video') => {
-    if (type === 'both') {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      videoTrack.value = stream.getVideoTracks()[0];
-      audioTrack.value = stream.getAudioTracks()[0];
-    } else if (type === 'audio') {
+    if (type === 'audio' || type === 'both') {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
       audioTrack.value = stream.getAudioTracks()[0];
-    } else if (type === 'video') {
+    }
+
+    if (type === 'video' || type === 'both') {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
       });

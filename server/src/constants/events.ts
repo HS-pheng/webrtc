@@ -10,6 +10,7 @@ export const GatewayEvents = {
   GET_NEW_PRODUCER: 'get-new-producer',
   RESUME_CONSUMER: 'resume-consumer',
   GET_PEERS_INFO: 'get-peers-info',
+  MEDIA_STATE_CHANGED: 'media-state-changed',
 } as const;
 
 export const CommunicationEvents = {
@@ -23,4 +24,5 @@ export const CommunicationEvents = {
   READY_FOR_INTERVIEW: 'ready-for-interview',
   NEXT_CANDIDATE: 'next-candidate',
   NEW_PEER_INFO: 'new-peer-info',
+  PEER_PRODUCER_STATE_CHANGED: 'peer-producer-state-changed',
 } as const;

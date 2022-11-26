@@ -20,6 +20,19 @@ export const usePeerStore = defineStore('peerStore', () => {
     peers.value.set(peerId, peer);
   };
 
+  const updateConsumerState = (
+    peerId: string,
+    producerId: string,
+    state: 'on' | 'off',
+  ) => {
+    const peer = peers.value.get(peerId);
+    peer?.consumers.forEach((consumer) => {
+      if (consumer.producerId === producerId) {
+        state === 'on' ? consumer.resume() : consumer.pause();
+      }
+    });
+  };
+
   const removePeer = (producerClientId: string) => {
     const peer = peers.value.get(producerClientId);
     peer?.consumers && peer.consumers.forEach((consumer) => consumer.close());
@@ -39,5 +52,6 @@ export const usePeerStore = defineStore('peerStore', () => {
     removePeer,
     destroyPeers,
     addPeerInfo,
+    updateConsumerState,
   };
 });

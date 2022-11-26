@@ -3,7 +3,11 @@ import { Consumer } from 'mediasoup-client/lib/Consumer';
 export const extractTracks = (consumers: Consumer[]) =>
   consumers.map((consumer) => consumer.track);
 
-export const calcViewlayout = (containerWidth, containerHeight, numItems) => {
+export const calcViewlayout = (
+  containerWidth: number,
+  containerHeight: number,
+  numItems: number,
+) => {
   const gaps = 10;
   const itemAspect = 16 / 9;
   const maxSmallItems = 4;
@@ -44,7 +48,7 @@ export const calcViewlayout = (containerWidth, containerHeight, numItems) => {
   return layout;
 };
 
-export const extractItemStyle = (item) => {
+export const extractItemStyle = (item: any) => {
   return {
     visibility: 'visible',
     width: `${item.width}px`,
