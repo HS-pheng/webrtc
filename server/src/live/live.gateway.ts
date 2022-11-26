@@ -175,12 +175,12 @@ export class LiveGateway
 
   @SubscribeMessage(GatewayEvents.MEDIA_STATE_CHANGED)
   async toggleMediaProducer(
-    @MessageBody() body: { producerId: string; status: 'on' | 'off' },
+    @MessageBody() body: { producerId: string; state: 'on' | 'off' },
     @ConnectedSocket() client: Socket,
   ) {
-    const { producerId, status } = body;
+    const { producerId, state } = body;
 
-    await this.msService.toggleAssociatedConsumers(producerId, status, client);
+    await this.msService.toggleAssociatedConsumers(producerId, state, client);
 
     this.socketService.toInterviewRoomExceptSender(
       client,
@@ -188,7 +188,7 @@ export class LiveGateway
       {
         peerId: client.id,
         producerId,
-        status,
+        state,
       },
     );
   }

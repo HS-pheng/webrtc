@@ -123,9 +123,9 @@ const peers = computed(() => {
 
 const handleMediaStateChange = async (
   mediaType: 'video' | 'audio',
-  status: 'on' | 'off',
+  state: 'on' | 'off',
 ) => {
-  if (status === 'on') {
+  if (state === 'on') {
     await localMedia.getMedia(mediaType);
   } else {
     localMedia.stopMedia(mediaType);
@@ -138,6 +138,6 @@ const handleMediaStateChange = async (
 
   const producerId = await $msManager.toggleMediaProducer(mediaType, track);
 
-  signalingManager.signalMediaStateChanged(producerId, status);
+  signalingManager.signalMediaStateChanged(producerId, state);
 };
 </script>

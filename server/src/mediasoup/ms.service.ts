@@ -231,7 +231,7 @@ export class MsService {
 
   async toggleAssociatedConsumers(
     producerId: string,
-    status: 'on' | 'off',
+    state: 'on' | 'off',
     client: Socket,
   ) {
     const producer = (
@@ -245,7 +245,7 @@ export class MsService {
       Consumer
     >) {
       if (consumer.producerId === producerId) {
-        status === 'on' ? await consumer.resume() : await consumer.pause();
+        state === 'on' ? await consumer.resume() : await consumer.pause();
       }
     }
   }

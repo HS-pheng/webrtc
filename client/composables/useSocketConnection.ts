@@ -115,8 +115,8 @@ export function useSocketConnection() {
 
     socket.value!.on(
       MsEvents.PEER_PRODUCER_STATE_CHANGED,
-      ({ peerId, producerId, status }) => {
-        peerStore.updateConsumerState(peerId, producerId, status);
+      ({ peerId, producerId, state }) => {
+        peerStore.updateConsumerState(peerId, producerId, state);
       },
     );
   }
