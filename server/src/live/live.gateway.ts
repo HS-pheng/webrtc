@@ -180,7 +180,7 @@ export class LiveGateway
   ) {
     const { producerId, state } = body;
 
-    await this.msService.toggleAssociatedConsumers(producerId, state, client);
+    await this.msService.toggleProducer(producerId, state, client);
 
     this.socketService.toInterviewRoomExceptSender(
       client,

@@ -229,7 +229,7 @@ export class MsService {
     };
   }
 
-  async toggleAssociatedConsumers(
+  async toggleProducer(
     producerId: string,
     state: 'on' | 'off',
     client: Socket,
@@ -238,15 +238,16 @@ export class MsService {
       this.router.appData.producers as Map<string, Producer>
     ).get(producerId);
 
-    if (producer.appData.uid !== client.id) return;
+    if (producer?.appData.uid !== client.id) return;
 
-    for (const [, consumer] of this.router.appData.consumers as Map<
-      string,
-      Consumer
-    >) {
-      if (consumer.producerId === producerId) {
-        state === 'on' ? await consumer.resume() : await consumer.pause();
-      }
+    if (state === 'on') {
+      console.log('trying to resume producer: ', producer.id);
+      await producer.resume();
+      console.log('resumed producer: ', producer.id);
+    } else {
+      console.log('trying to pause producer: ', producer.id);
+      await producer.pause();
+      console.log('paused producer: ', producer.id);
     }
   }
 

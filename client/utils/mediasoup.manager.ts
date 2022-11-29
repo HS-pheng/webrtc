@@ -136,10 +136,10 @@ export class MsManager {
       mediaType === 'video' ? this.videoProducer : this.audioProducer;
 
     if (producer!.paused) {
-      await producer?.replaceTrack({ track });
-      producer?.resume();
+      await producer!.replaceTrack({ track });
+      producer!.resume();
     } else {
-      producer?.pause();
+      producer!.pause();
     }
 
     return producer!.id;
