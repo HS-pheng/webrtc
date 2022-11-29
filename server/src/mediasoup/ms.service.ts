@@ -241,13 +241,9 @@ export class MsService {
     if (producer?.appData.uid !== client.id) return;
 
     if (state === 'on') {
-      console.log('trying to resume producer: ', producer.id);
       await producer.resume();
-      console.log('resumed producer: ', producer.id);
     } else {
-      console.log('trying to pause producer: ', producer.id);
       await producer.pause();
-      console.log('paused producer: ', producer.id);
     }
   }
 

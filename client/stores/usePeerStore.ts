@@ -13,11 +13,12 @@ export const usePeerStore = defineStore('peerStore', () => {
   };
 
   const addPeerInfo = (peerInfo: IPeerInfo, peerId: string) => {
-    let peer = peers.value.get(peerId);
-    if (!peer) {
-      peer = { consumers: [], peerInfo };
+    if (!peers.value.has(peerId)) {
+      peers.value.set(peerId, {
+        consumers: [],
+        peerInfo,
+      });
     }
-    peers.value.set(peerId, peer);
   };
 
   const updateConsumerState = (

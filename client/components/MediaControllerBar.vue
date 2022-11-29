@@ -1,17 +1,17 @@
 <template>
   <div class="flex justify-center mt-10px gap-30px">
     <Icon
-      :name="mic[deviceState.audio as keyof typeof mic]"
+      :name="mic[deviceState.audio]"
       size="50px"
       @click="toggleState(MEDIA_DEVICE_TYPE.AUDIO)"
     />
     <Icon
-      :name="cam[deviceState.video as keyof typeof cam]"
+      :name="cam[deviceState.video]"
       size="50px"
       @click="toggleState(MEDIA_DEVICE_TYPE.VIDEO)"
     />
     <Icon
-      :name="screen[deviceState.display as keyof typeof screen]"
+      :name="screen[deviceState.display]"
       size="50px"
       @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
     />
@@ -25,6 +25,12 @@
 
 <script lang="ts" setup>
 const emit = defineEmits(['mediaStateChange', 'leaveCall']);
+
+const deviceState = ref<Record<string, 'on' | 'off'>>({
+  audio: 'on',
+  video: 'on',
+  display: 'off',
+});
 
 const MEDIA_DEVICE_TYPE = {
   AUDIO: 'audio',
@@ -47,23 +53,11 @@ const screen = {
   off: 'lucide:screen-share-off',
 };
 
-const deviceState = ref({
-  audio: 'on',
-  video: 'on',
-  display: 'off',
-});
+const toggleState = (deviceType: keyof typeof deviceState.value) => {
+  deviceState.value[deviceType] =
+    deviceState.value[deviceType] === 'on' ? 'off' : 'on';
 
-const toggleState = (deviceType: string) => {
-  deviceState.value[deviceType as keyof typeof deviceState.value] =
-    deviceState.value[deviceType as keyof typeof deviceState.value] === 'on'
-      ? 'off'
-      : 'on';
-
-  emit(
-    'mediaStateChange',
-    deviceType,
-    deviceState.value[deviceType as keyof typeof deviceState.value],
-  );
+  emit('mediaStateChange', deviceType, deviceState.value[deviceType]);
 };
 
 const handleLeaveCall = () => {
