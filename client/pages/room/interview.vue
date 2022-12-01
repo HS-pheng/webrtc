@@ -6,7 +6,7 @@
     </div>
     <div v-else class="flex flex-col">
       <div class="border-3">
-        <VideoScreen :peers="peers" />
+        <VideoScreen :peers="peers" :display-track="displayTrack" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
         <CandidateList
@@ -46,27 +46,25 @@ provide('isInterviewer', isInterviewer);
 const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
 
+const displayTrack = computed(
+  () => peerStore.presenterScreen?.track || localMedia.displayTrack.value,
+);
+
 const joinInterviewRoom = async () => {
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await produceMedia('audio');
-  await produceMedia('video');
+  await localMedia.getMedia('both');
+  await $msManager.createProducer(
+    localMedia.audioTrack.value as MediaStreamTrack,
+    'audio',
+  );
+  await $msManager.createProducer(
+    localMedia.videoTrack.value as MediaStreamTrack,
+    'video',
+  );
 
   await interviewManager.loadPeersInfo();
   await loadPeersConsumers();
-};
-
-const produceMedia = async (type: 'audio' | 'video') => {
-  await localMedia.getMedia(type);
-  if (type === 'video') {
-    await $msManager.createProducer(
-      localMedia.videoTrack.value as MediaStreamTrack,
-    );
-  } else {
-    await $msManager.createProducer(
-      localMedia.audioTrack.value as MediaStreamTrack,
-    );
-  }
 };
 
 const renderCandidateList = async () => {
@@ -122,13 +120,27 @@ const peers = computed(() => {
 });
 
 const handleMediaStateChange = async (
-  mediaType: 'video' | 'audio',
+  mediaType: 'video' | 'audio' | 'display',
   state: 'on' | 'off',
 ) => {
   if (state === 'on') {
     await localMedia.getMedia(mediaType);
   } else {
     localMedia.stopMedia(mediaType);
+  }
+
+  if (mediaType === 'display') {
+    if (state === 'off') {
+      const displayProducerId = $msManager.displayProducer!.id;
+      $msManager.displayProducer!.close();
+      signalingManager.signalStopSharing(displayProducerId);
+      return;
+    }
+    await $msManager.createProducer(
+      localMedia.displayTrack.value as MediaStreamTrack,
+      mediaType,
+    );
+    return;
   }
 
   const track =

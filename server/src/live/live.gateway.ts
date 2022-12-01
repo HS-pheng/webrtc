@@ -132,8 +132,16 @@ export class LiveGateway
     @MessageBody() body: any,
     @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
-    const { transportId, ...params } = body;
-    const producerId = await this.msService.produce(params, transportId);
+    const { transportId, type, ...params } = body;
+    const producerId = await this.msService.produce(params, transportId, type);
+
+    if (type === 'display') {
+      this.socketService.toInterviewRoomExceptSender(
+        client,
+        'presenter-starts',
+        producerId,
+      );
+    }
 
     this.socketService.toInterviewRoomExceptSender(
       client,
@@ -190,6 +198,20 @@ export class LiveGateway
         producerId,
         state,
       },
+    );
+  }
+
+  @SubscribeMessage('stop-sharing')
+  async stopSharing(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() displayProducerId: string,
+  ) {
+    this.msService.closeProducerById(displayProducerId);
+
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      'presenter-stops',
+      {},
     );
   }
 

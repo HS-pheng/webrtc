@@ -7,7 +7,12 @@ export function useSignaling() {
     socketStore.socket!.emit('media-state-changed', { producerId, state });
   };
 
+  const signalStopSharing = (displayProducerId: string) => {
+    socketStore.socket!.emit('stop-sharing', displayProducerId);
+  };
+
   return {
     signalMediaStateChanged,
+    signalStopSharing,
   };
 }

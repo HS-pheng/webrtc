@@ -101,6 +101,16 @@ export function useSocketConnection() {
         peerStore.addPeerInfo(peer.info, peer.id);
       },
     );
+
+    // socket.value!.on('presenter-starts', async (producerId) => {
+    //   const consumer = await $msManager.handleNewPeerProducer(producerId);
+    //   peerStore.presenterScreen = consumer;
+    // });
+
+    // socket.value!.on('presenter-stops', () => {
+    //   peerStore.presenterScreen!.close();
+    //   peerStore.presenterScreen = null;
+    // });
   }
 
   function subscribeMediaSoupListener() {
@@ -110,6 +120,12 @@ export function useSocketConnection() {
     });
 
     socket.value!.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
+      if (
+        peerStore.presenterScreen?.appData.producerClientId === producerClientId
+      ) {
+        peerStore.presenterScreen?.close();
+        peerStore.presenterScreen = null;
+      }
       peerStore.removePeer(producerClientId);
     });
 
