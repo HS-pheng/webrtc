@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { useCandidateStore } from '~~/stores/useCandidateStore';
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { usePeerStore } from '~~/stores/usePeerStore';
 
 const { $msManager } = useNuxtApp();
@@ -34,13 +35,18 @@ const interviewManager = useInterviewManager();
 const signalingManager = useSignaling();
 const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
+const handshakePayload = useHandshakePayload();
 
 const route = useRoute();
 const interviewFinished = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
-const isInterviewer = computed(() => route?.query.interviewer === 'true');
+const isInterviewer = computed(() => {
+  handshakePayload.isInterviewer = route?.query.interviewer as string;
+  return route?.query.interviewer === 'true';
+});
+
 provide('isInterviewer', isInterviewer);
 
 const localMedia = useLocalMedia();

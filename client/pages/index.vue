@@ -20,7 +20,6 @@ import { useHandshakePayload } from '@@/stores/useHandshakePayload';
 const handshakePayload = useHandshakePayload();
 
 const joinAsInterviewer: any = () => {
-  handshakePayload.isInterviewer = 'true';
   return navigateTo({
     path: '/room/interview',
     query: {

@@ -102,15 +102,15 @@ export function useSocketConnection() {
       },
     );
 
-    // socket.value!.on('presenter-starts', async (producerId) => {
-    //   const consumer = await $msManager.handleNewPeerProducer(producerId);
-    //   peerStore.presenterScreen = consumer;
-    // });
+    socket.value!.on('presenter-starts', async (producerId) => {
+      const consumer = await $msManager.handleNewPeerProducer(producerId);
+      peerStore.presenterScreen = consumer;
+    });
 
-    // socket.value!.on('presenter-stops', () => {
-    //   peerStore.presenterScreen!.close();
-    //   peerStore.presenterScreen = null;
-    // });
+    socket.value!.on('presenter-stops', () => {
+      peerStore.presenterScreen!.close();
+      peerStore.presenterScreen = null;
+    });
   }
 
   function subscribeMediaSoupListener() {
