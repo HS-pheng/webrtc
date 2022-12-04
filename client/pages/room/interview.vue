@@ -6,7 +6,7 @@
     </div>
     <div v-else class="flex flex-col">
       <div class="border-3">
-        <VideoScreen :peers="peers" :display-track="displayTrack" />
+        <VideoScreen :peers="peers" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
         <CandidateList
@@ -51,10 +51,7 @@ provide('isInterviewer', isInterviewer);
 
 const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
-
-const displayTrack = computed(
-  () => peerStore.presenterScreen?.track || localMedia.displayTrack.value,
-);
+provide('localDisplayTrack', localMedia.displayTrack);
 
 const joinInterviewRoom = async () => {
   const setUpMode = 'both';
@@ -155,6 +152,8 @@ const handleMediaStateChange = async (
       : localMedia.audioTrack.value;
 
   const producerId = await $msManager.toggleMediaProducer(mediaType, track);
+
+  if (!producerId) return;
 
   signalingManager.signalMediaStateChanged(producerId, state);
 };

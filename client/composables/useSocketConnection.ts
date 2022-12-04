@@ -102,14 +102,16 @@ export function useSocketConnection() {
       },
     );
 
-    socket.value!.on('presenter-starts', async (producerId) => {
-      const consumer = await $msManager.handleNewPeerProducer(producerId);
-      peerStore.presenterScreen = consumer;
-    });
+    socket.value!.on(
+      'presenter-starts',
+      async ({ producerId, producerClientId }) => {
+        const consumer = await $msManager.handleNewPeerProducer(producerId);
+        peerStore.addPeerDisplay(producerClientId, consumer);
+      },
+    );
 
-    socket.value!.on('presenter-stops', () => {
-      peerStore.presenterScreen!.close();
-      peerStore.presenterScreen = null;
+    socket.value!.on('presenter-stops', (presenterId) => {
+      peerStore.removePeerDisplay(presenterId);
     });
   }
 
@@ -120,12 +122,7 @@ export function useSocketConnection() {
     });
 
     socket.value!.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
-      if (
-        peerStore.presenterScreen?.appData.producerClientId === producerClientId
-      ) {
-        peerStore.presenterScreen?.close();
-        peerStore.presenterScreen = null;
-      }
+      peerStore.removePeerDisplay(producerClientId);
       peerStore.removePeer(producerClientId);
     });
 
@@ -139,7 +136,7 @@ export function useSocketConnection() {
 
   function disconnectSocket() {
     socketStore.connected = false;
-    socket.value!.disconnect();
+    socket.value?.disconnect();
   }
 
   return { socket, disconnectSocket, connected };

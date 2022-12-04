@@ -139,7 +139,7 @@ export class LiveGateway
       this.socketService.toInterviewRoomExceptSender(
         client,
         'presenter-starts',
-        producerId,
+        { producerId, producerClientId: client.id },
       );
     }
 
@@ -211,7 +211,7 @@ export class LiveGateway
     this.socketService.toInterviewRoomExceptSender(
       client,
       'presenter-stops',
-      {},
+      client.id,
     );
   }
 

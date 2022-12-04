@@ -146,11 +146,13 @@ export class MsManager {
         ? this.displayProducer
         : this.audioProducer;
 
-    if (producer!.paused) {
-      await producer!.replaceTrack({ track });
-      producer!.resume();
+    if (!producer) return;
+
+    if (producer.paused) {
+      await producer.replaceTrack({ track });
+      producer.resume();
     } else {
-      producer!.pause();
+      producer.pause();
     }
 
     return producer!.id;

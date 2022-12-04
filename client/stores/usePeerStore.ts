@@ -4,22 +4,41 @@ import { IPeer, IPeerInfo } from '~~/constants/types';
 
 export const usePeerStore = defineStore('peerStore', () => {
   const peers = ref(new Map<string, IPeer>());
-  const presenterScreen = ref<Consumer | null>(null);
 
   const addPeerConsumer = (consumer: Consumer) => {
-    if (consumer.appData.type === 'display') {
-      presenterScreen.value = consumer;
-    }
     const peerId = consumer.appData.producerClientId as string;
     const peer = peers.value.get(peerId);
-    peer!.consumers.push(consumer);
+    if (!peer) return;
+
+    if (consumer.appData.type === 'display') {
+      console.log('display added');
+      peer.displayConsumer = consumer;
+    }
+
+    peer.consumers.push(consumer);
     peers.value.set(peerId, peer!);
+  };
+
+  const removePeerDisplay = (peerId: string) => {
+    const peer = peers.value.get(peerId);
+    if (!peer) return;
+
+    peer.displayConsumer?.close();
+    peer.displayConsumer = null;
+  };
+
+  const addPeerDisplay = (peerId: string, consumer: Consumer) => {
+    const peer = peers.value.get(peerId);
+    if (!peer) return;
+
+    peer.displayConsumer = consumer;
   };
 
   const addPeerInfo = (peerInfo: IPeerInfo, peerId: string) => {
     if (!peers.value.has(peerId)) {
       peers.value.set(peerId, {
         consumers: [],
+        displayConsumer: null,
         peerInfo,
       });
     }
@@ -53,11 +72,12 @@ export const usePeerStore = defineStore('peerStore', () => {
 
   return {
     peers,
-    presenterScreen,
     addPeerConsumer,
     removePeer,
     destroyPeers,
     addPeerInfo,
     updateConsumerState,
+    removePeerDisplay,
+    addPeerDisplay,
   };
 });
