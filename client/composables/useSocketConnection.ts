@@ -113,6 +113,15 @@ export function useSocketConnection() {
     socket.value!.on('presenter-stops', (presenterId) => {
       peerStore.removePeerDisplay(presenterId);
     });
+
+    socket.value!.on('session-ended', () => {
+      const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
+      interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
+      disconnectSocket();
+      peerStore.destroyPeers();
+      $msManager.closeTransports();
+      return navigateTo('/');
+    });
   }
 
   function subscribeMediaSoupListener() {

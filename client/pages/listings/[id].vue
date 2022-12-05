@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="listing">
-      <CommonCardHeader :title="listing.title">
+      <CommonCardHeader :title="listing?.title">
         <CommonButton @click="$router.push(`/listings/live/${listing.id}`)">
           Join
         </CommonButton>

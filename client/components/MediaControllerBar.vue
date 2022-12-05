@@ -3,25 +3,25 @@
     <Icon
       class="cursor-pointer"
       :name="mic[deviceState.audio]"
-      size="50px"
+      size="45px"
       @click="toggleState(MEDIA_DEVICE_TYPE.AUDIO)"
     />
     <Icon
       class="cursor-pointer"
       :name="cam[deviceState.video]"
-      size="50px"
+      size="45px"
       @click="toggleState(MEDIA_DEVICE_TYPE.VIDEO)"
     />
     <Icon
       class="cursor-pointer"
       :name="screen[deviceState.display]"
-      size="50px"
+      size="45px"
       @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
     />
     <Icon
       class="cursor-pointer"
       name="material-symbols:call-end-outline"
-      size="50px"
+      size="45px"
       @click="handleLeaveCall"
     />
   </div>

@@ -18,8 +18,13 @@ export function useSignaling() {
     );
   };
 
+  const signalStopSession = () => {
+    socketStore.socket!.emit('stop-session');
+  };
+
   return {
     signalMediaStateChanged,
     signalStopSharing,
+    signalStopSession,
   };
 }

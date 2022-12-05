@@ -29,9 +29,6 @@ export function useInterviewManager() {
   const loadPeersInfo = async () => {
     const peersInfo: { [peerId: string]: IPeerInfo } =
       await socketStore.socket!.request(InterviewRequests.GET_PEERS_INFO, {});
-
-    console.log(peersInfo);
-
     Object.entries(peersInfo).forEach(([peerId, peerInfo]) =>
       peerStore.addPeerInfo(peerInfo, peerId),
     );

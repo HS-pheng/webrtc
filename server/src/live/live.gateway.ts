@@ -110,6 +110,17 @@ export class LiveGateway
     return this.socketService.getPeersInfoExcept(client);
   }
 
+  @SubscribeMessage('stop-session')
+  async stopSession(@ConnectedSocket() client: Socket) {
+    console.log('session stopped');
+    this.socketService.toInterviewRoomExceptSender(client, 'session-ended');
+
+    const candidatesInList = this.waitingListService.getWaitingList();
+    candidatesInList.forEach((candidate) =>
+      this.socketService.send(candidate.id, 'session-ended'),
+    );
+  }
+
   // ---------- mediasoup endpoints --------------
   @SubscribeMessage(GatewayEvents.SETUP_TRANSPORT)
   async setupTransport(

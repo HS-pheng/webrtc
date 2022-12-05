@@ -6,7 +6,7 @@
       </CommonButton>
     </CommonCardHeader>
     <div v-if="isInterviewer" class="flex mb-3">
-      <CommonButton @click="requestNextCandidate"> Stop Session </CommonButton>
+      <CommonButton @click="stopSession"> Stop Session </CommonButton>
       <CommonButton @click="requestNextCandidate">
         Next Participant
       </CommonButton>
@@ -127,6 +127,7 @@ function attachInterviewEventListener() {
 
 function disconnectionCleanup() {
   localMedia.stopMedia('both');
+  localMedia.stopMedia('display');
   disconnectSocket();
   peerStore.destroyPeers();
   $msManager.closeTransports();
@@ -175,4 +176,10 @@ const handleMediaStateChange = async (
 
   signalingManager.signalMediaStateChanged(producerId, state);
 };
+
+function stopSession() {
+  signalingManager.signalStopSession();
+  disconnectionCleanup();
+  return navigateTo('/');
+}
 </script>

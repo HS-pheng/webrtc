@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="listing">
-      <CommonCardHeader :title="listing.title" class="mb-4">
+      <CommonCardHeader :title="listing?.title" class="mb-4">
         <CommonButton @click="$router.push(`/listings/${$route.params.id}`)">
           Back
         </CommonButton>
