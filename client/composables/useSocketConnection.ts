@@ -74,9 +74,9 @@ export function useSocketConnection() {
   }
 
   function subscribeCandidateEventListener() {
-    socket.value!.on(CommunicationEvents.READY_FOR_INTERVIEW, () => {
+    socket.value!.on(CommunicationEvents.READY_FOR_INTERVIEW, (roomId) => {
       return navigateTo({
-        path: '/room/interview',
+        path: `/room/interview/${roomId}`,
         query: {
           interviewer: 'false',
         },

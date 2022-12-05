@@ -1,7 +1,10 @@
 <template>
-  <div class="flex">
-    <div class="border-3 mt-3 mb-3 p-3 flex-grow">
-      <p>Candidate list</p>
+  <div>
+    <p class="cursor-pointer" @click="showListDetails = true">
+      Currently Waiting: {{ candidateList.length }} | {{ currentCandidateName }}
+    </p>
+
+    <CommonModal v-model="showListDetails" title="Candidate lists:">
       <ul>
         <p v-if="candidateList.length === 0">No candidate</p>
         <div>
@@ -10,15 +13,12 @@
           </li>
         </div>
       </ul>
-    </div>
-    <div class="border-3 mt-3 mb-3 p-3 flex-grow">
-      <p>Current candidate</p>
-      <p>{{ currentCandidateName }}</p>
-    </div>
+    </CommonModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import { EMPTY_CANDIDATE } from '~~/constants/constant';
 import { candidateInfo } from '~~/constants/types';
 
 const props = defineProps<{
@@ -26,6 +26,11 @@ const props = defineProps<{
   currentCandidate: candidateInfo;
 }>();
 
+const showListDetails = ref(false);
 const candidateList = computed(() => props.candidateList);
-const currentCandidateName = computed(() => props.currentCandidate.username);
+const currentCandidateName = computed(() => {
+  if (props.currentCandidate.username !== EMPTY_CANDIDATE.username)
+    return `Current Candidate: ${props.currentCandidate.username}`;
+  return 'Currently No Participant';
+});
 </script>

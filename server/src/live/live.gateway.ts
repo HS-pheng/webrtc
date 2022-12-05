@@ -71,13 +71,13 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.NEXT_CANDIDATE)
-  async handleNextCandidateRequest() {
+  async handleNextCandidateRequest(@MessageBody() roomId: string) {
     const nextCandidate = this.waitingListService.getNextCandidate();
 
     this.liveService.removeCurrentCandidate();
 
     nextCandidate
-      ? this.liveService.announceMovingToNextCandidate(nextCandidate)
+      ? this.liveService.announceMovingToNextCandidate(nextCandidate, roomId)
       : this.socketService.send(
           interviewerGroup,
           CommunicationEvents.NO_CANDIDATE,

@@ -5,7 +5,7 @@
         <CommonButton @click="$router.push(`/listings/live/${listing.id}`)">
           Join
         </CommonButton>
-        <CommonButton @click="$router.push('/listings')"> Back </CommonButton>
+        <CommonButton @click="$router.push('/')"> Back </CommonButton>
       </CommonCardHeader>
       <div class="p-4 mt-2">
         {{ listing.description }}

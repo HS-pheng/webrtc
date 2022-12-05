@@ -9,7 +9,7 @@
       ></video>
     </div>
     <h3
-      class="text-center z-1 absolute bottom-0 bg-opacity-50 text-white bg-slate-600 p-1"
+      class="text-center z-1 absolute bottom-0 bg-opacity-50 text-white bg-slate-600 p-1 text-s"
     >
       You
     </h3>
@@ -22,7 +22,7 @@
     ></video>
     <Icon
       v-if="localDisplayTrack"
-      class="absolute bottom-0 right-0 z-1"
+      class="absolute bottom-0 right-0 z-1 cursor-pointer"
       name="radix-icons:enter-full-screen"
       size="50px"
       @click="toggleFullscreen"

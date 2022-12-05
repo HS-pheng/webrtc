@@ -7,8 +7,8 @@ export function useInterviewManager() {
   const socketStore = useWebsocket();
   const peerStore = usePeerStore();
 
-  const requestNextCandidate = () => {
-    socketStore.socket!.emit(InterviewRequests.NEXT_CANDIDATE, {});
+  const requestNextCandidate = (roomId: string) => {
+    socketStore.socket!.emit(InterviewRequests.NEXT_CANDIDATE, roomId);
   };
 
   const getCandidateList = (): Promise<candidateInfo[]> => {

@@ -6,10 +6,16 @@
           Back
         </CommonButton>
       </CommonCardHeader>
+      <CommonInputGroup
+        v-model="name"
+        name="Name"
+        type="text"
+        class="w-200px"
+      />
       <CommonButton v-if="!hostMode" @click="joinWaitingList"
         >Join Waiting List</CommonButton
       >
-      <CommonButton v-if="!hostMode" @click="hostMode = true"
+      <CommonButton v-if="!hostMode" @click="enterHostMode"
         >Enter Host Mode</CommonButton
       >
       <div v-else class="flex">
@@ -25,27 +31,36 @@
           {{ 'Currently Waiting: ' + numWaitingParticipants }}
         </p>
       </div>
-      <div class="flex w-full p-4">
-        <div class="flex flex-col w-1/2">
-          <video class="w-full bg-black" />
-          <p class="text-xs text-center">Local Video</p>
-        </div>
-        <div class="bg-white w-1" />
-        <div class="flex flex-col w-1/2">
-          <video v-if="currentParticipant" class="w-full bg-black" />
-          <p v-else class="text-center my-auto">Currently No Participant</p>
-          <p class="text-xs text-center">Remote Video</p>
-        </div>
-      </div>
     </div>
     <div v-else>Loading</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
+
+const { disconnectSocket } = useSocketConnection();
+const handshakePayload = useHandshakePayload();
 const route = useRoute();
 
+const newListing = ref({
+  title: '',
+  description: '',
+});
+
 const listing = ref(null);
+const name = ref('');
+
+watch(name, handleNameChange);
+
+function handleNameChange(name: string) {
+  handshakePayload.username = name;
+}
+
+onMounted(() => {
+  handshakePayload.username = 'Anonymous';
+  disconnectSocket();
+});
 
 onMounted(async () => {
   listing.value = await $fetch<any>(
@@ -55,10 +70,21 @@ onMounted(async () => {
 
 // Just for simplicity reason is enabled at all times. It should obviously not be possible for anyone to enter HostMode
 const hostMode = ref(false);
-const currentParticipant = ref(false);
-const numWaitingParticipants = ref(0);
+const currentParticipant = ref();
+const numWaitingParticipants = ref(1);
 
 function joinWaitingList() {
-  // Do some stuff
+  handshakePayload.isInterviewer = 'false';
+  return navigateTo(`/room/wait/${route.params.id}`);
+}
+
+function enterHostMode() {
+  hostMode.value = true;
+  return navigateTo({
+    path: `/room/interview/${route.params.id}`,
+    query: {
+      interviewer: 'true',
+    },
+  });
 }
 </script>

@@ -72,7 +72,7 @@ export class LiveService {
     }
   }
 
-  announceMovingToNextCandidate(nextCandidate: candidateInfo) {
+  announceMovingToNextCandidate(nextCandidate: candidateInfo, roomId: string) {
     this.watingListService.currentCandidate = nextCandidate;
     this.watingListService.removeCandidate(nextCandidate.id);
     this.socketService.updateCandidateStatistics(
@@ -82,6 +82,7 @@ export class LiveService {
     this.socketService.send(
       nextCandidate.id,
       CommunicationEvents.READY_FOR_INTERVIEW,
+      roomId,
     );
     this.socketService.send(
       interviewerGroup,

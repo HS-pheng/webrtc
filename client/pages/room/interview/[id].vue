@@ -1,19 +1,28 @@
 <template>
   <div>
+    <CommonCardHeader :title="listing?.title" class="mb-4">
+      <CommonButton @click="$router.push(`/listings/${$route.params.id}`)">
+        Back
+      </CommonButton>
+    </CommonCardHeader>
+    <div v-if="isInterviewer" class="flex mb-3">
+      <CommonButton @click="requestNextCandidate"> Stop Session </CommonButton>
+      <CommonButton @click="requestNextCandidate">
+        Next Participant
+      </CommonButton>
+      <CandidateList
+        class="ml-auto"
+        :current-candidate="candidateStore.currentCandidate"
+        :candidate-list="candidateStore.candidateList"
+      />
+    </div>
     <div v-if="interviewFinished">
       <p>Your interview is finished</p>
       <CommonButton @click.once="navigateTo('/')">Home</CommonButton>
     </div>
     <div v-else class="flex flex-col">
-      <div class="border-3">
+      <div class="">
         <VideoScreen :peers="peers" />
-      </div>
-      <div v-if="isInterviewer" class="flex flex-col">
-        <CandidateList
-          :current-candidate="candidateStore.currentCandidate"
-          :candidate-list="candidateStore.candidateList"
-        />
-        <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
       <MediaControllerBar
         @media-state-change="handleMediaStateChange"
@@ -53,6 +62,14 @@ const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
 provide('localDisplayTrack', localMedia.displayTrack);
 
+const listing = ref(null);
+
+onMounted(async () => {
+  listing.value = await $fetch<any>(
+    `http://localhost:3001/listings/${route.params.id}`,
+  );
+});
+
 const joinInterviewRoom = async () => {
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
@@ -76,7 +93,8 @@ const renderCandidateList = async () => {
 };
 
 const requestNextCandidate = () => {
-  if (connected.value) interviewManager.requestNextCandidate();
+  const roomId = route.params.id;
+  if (connected.value) interviewManager.requestNextCandidate(roomId);
 };
 
 async function loadPeersConsumers() {
