@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { ListingInfo } from '~~/constants/types';
 import { useCandidateStore } from '~~/stores/useCandidateStore';
 import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { usePeerStore } from '~~/stores/usePeerStore';
@@ -62,7 +63,7 @@ const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
 provide('localDisplayTrack', localMedia.displayTrack);
 
-const listing = ref(null);
+const listing = ref<ListingInfo | null>(null);
 
 onMounted(async () => {
   listing.value = await $fetch<any>(
@@ -93,7 +94,7 @@ const renderCandidateList = async () => {
 };
 
 const requestNextCandidate = () => {
-  const roomId = route.params.id;
+  const roomId = route.params.id as string;
   if (connected.value) interviewManager.requestNextCandidate(roomId);
 };
 

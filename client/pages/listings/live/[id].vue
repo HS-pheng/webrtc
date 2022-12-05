@@ -12,43 +12,22 @@
         type="text"
         class="w-200px"
       />
-      <CommonButton v-if="!hostMode" @click="joinWaitingList"
-        >Join Waiting List</CommonButton
-      >
-      <CommonButton v-if="!hostMode" @click="enterHostMode"
-        >Enter Host Mode</CommonButton
-      >
-      <div v-else class="flex">
-        <CommonButton>Start Session</CommonButton>
-        <CommonButton>Stop Session</CommonButton>
-        <CommonButton v-if="currentParticipant"
-          >Conclude Participant Pitch</CommonButton
-        >
-        <CommonButton v-else-if="numWaitingParticipants > 0"
-          >Next Participant</CommonButton
-        >
-        <p class="ml-auto">
-          {{ 'Currently Waiting: ' + numWaitingParticipants }}
-        </p>
-      </div>
+      <CommonButton @click="joinWaitingList">Join Waiting List</CommonButton>
+      <CommonButton @click="enterHostMode">Enter Host Mode</CommonButton>
     </div>
     <div v-else>Loading</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ListingInfo } from '~~/constants/types';
 import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 
 const { disconnectSocket } = useSocketConnection();
 const handshakePayload = useHandshakePayload();
 const route = useRoute();
 
-const newListing = ref({
-  title: '',
-  description: '',
-});
-
-const listing = ref(null);
+const listing = ref<ListingInfo | null>(null);
 const name = ref('');
 
 watch(name, handleNameChange);
@@ -68,18 +47,12 @@ onMounted(async () => {
   );
 });
 
-// Just for simplicity reason is enabled at all times. It should obviously not be possible for anyone to enter HostMode
-const hostMode = ref(false);
-const currentParticipant = ref();
-const numWaitingParticipants = ref(1);
-
 function joinWaitingList() {
   handshakePayload.isInterviewer = 'false';
   return navigateTo(`/room/wait/${route.params.id}`);
 }
 
 function enterHostMode() {
-  hostMode.value = true;
   return navigateTo({
     path: `/room/interview/${route.params.id}`,
     query: {

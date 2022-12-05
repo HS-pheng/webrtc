@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import { useWaitingStore } from '../../../stores/useWaitingStore';
+import { ListingInfo } from '../../../constants/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,7 +35,7 @@ const joinWaitRoom = () => {
 const candidateListNumber = computed(() => waitingStore.stats?.listNumber);
 const candidateListSize = computed(() => waitingStore.stats?.candidateListSize);
 
-const listing = ref(null);
+const listing = ref<ListingInfo | null>(null);
 
 onMounted(async () => {
   listing.value = await $fetch<any>(

@@ -18,7 +18,9 @@
 </template>
 
 <script setup lang="ts">
-const listings = ref([]);
+import { ListingInfo } from '~~/constants/types';
+
+const listings = ref<ListingInfo[]>([]);
 const showCreateDialog = ref(false);
 
 const newListing = ref({
@@ -27,7 +29,7 @@ const newListing = ref({
 });
 
 async function onCreate() {
-  const data = await $fetch<any[]>('http://localhost:3001/listings', {
+  const data = await $fetch<ListingInfo>('http://localhost:3001/listings', {
     body: newListing.value,
     method: 'post',
   });
@@ -35,7 +37,7 @@ async function onCreate() {
 }
 
 onMounted(async () => {
-  const data = await $fetch<any[]>('http://localhost:3001/listings');
+  const data = await $fetch<ListingInfo[]>('http://localhost:3001/listings');
   listings.value = data;
 });
 </script>
