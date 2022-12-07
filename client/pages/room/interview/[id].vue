@@ -7,7 +7,7 @@
     </CommonCardHeader>
     <div v-if="isInterviewer" class="flex mb-3">
       <CommonButton @click="stopSession"> Stop Session </CommonButton>
-      <CommonButton @click="requestNextCandidate">
+      <CommonButton v-if="!timerStarted" @click="requestNextCandidate">
         Next Participant
       </CommonButton>
       <CandidateList
@@ -16,7 +16,7 @@
         :candidate-list="candidateStore.candidateList"
       />
       <div class="ml-auto flex">
-        <Timer :duration="30" @timer-finished="timerFinished" />
+        <Timer @timer-state-changed="(state) => (timerStarted = state)" />
       </div>
     </div>
     <div v-if="interviewFinished">
@@ -52,6 +52,7 @@ const handshakePayload = useHandshakePayload();
 
 const route = useRoute();
 const interviewFinished = ref(false);
+const timerStarted = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
@@ -185,9 +186,5 @@ function stopSession() {
   signalingManager.signalStopSession();
   disconnectionCleanup();
   return navigateTo('/');
-}
-
-function timerFinished() {
-  requestNextCandidate();
 }
 </script>

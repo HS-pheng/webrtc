@@ -20,6 +20,7 @@ export function useSocketConnection() {
   const peerStore = usePeerStore();
   const handshakePayload = useHandshakePayload();
   const { $msManager } = useNuxtApp();
+  const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
 
   tryOnMounted(() => {
     if (!connected.value) {
@@ -71,6 +72,10 @@ export function useSocketConnection() {
     socket.value!.on(CommunicationEvents.NO_CANDIDATE, () => {
       candidateStore.currentCandidate = EMPTY_CANDIDATE;
     });
+
+    socket.value!.on('timer-started', (initialTimer) => {
+      interviewEventBroadcaster.emit('start-timer', initialTimer);
+    });
   }
 
   function subscribeCandidateEventListener() {
@@ -88,7 +93,6 @@ export function useSocketConnection() {
     });
 
     socket.value!.on(CommunicationEvents.INTERVIEW_FINISHED, () => {
-      const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
       interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
       $msManager.closeTransports();
     });
