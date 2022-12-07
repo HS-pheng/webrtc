@@ -11,10 +11,13 @@
         Next Participant
       </CommonButton>
       <CandidateList
-        class="ml-auto"
+        class="ml-auto flex"
         :current-candidate="candidateStore.currentCandidate"
         :candidate-list="candidateStore.candidateList"
       />
+      <div class="ml-auto flex">
+        <Timer :duration="30" @timer-finished="timerFinished" />
+      </div>
     </div>
     <div v-if="interviewFinished">
       <p>Your interview is finished</p>
@@ -182,5 +185,9 @@ function stopSession() {
   signalingManager.signalStopSession();
   disconnectionCleanup();
   return navigateTo('/');
+}
+
+function timerFinished() {
+  requestNextCandidate();
 }
 </script>

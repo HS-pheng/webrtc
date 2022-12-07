@@ -5,7 +5,7 @@
         ref="camVideo"
         autoplay
         playsinline
-        class="transform bg-gray-500 -z-1 m-auto h-full w-full object-cover"
+        class="transform rotate-y-180 bg-gray-500 -z-1 m-auto h-full w-full object-cover"
       ></video>
     </div>
     <h3

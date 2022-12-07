@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p class="cursor-pointer" @click="showListDetails = true">
+    <p class="cursor-pointer m-auto" @click="showListDetails = true">
       Currently Waiting: {{ candidateList.length }} | {{ currentCandidateName }}
     </p>
 
