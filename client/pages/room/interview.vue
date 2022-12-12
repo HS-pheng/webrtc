@@ -4,10 +4,9 @@
       <p>Your interview is finished</p>
       <CommonButton @click.once="navigateTo('/')">Home</CommonButton>
     </div>
-    <div v-else class="flex m-4 flex-col">
-      <div class="mx-auto flex flex-row gap-4">
-        <LocalVideo :video-track="localMedia.videoTrack.value" />
-        <RemotePeers v-if="hasRemotePeer" />
+    <div v-else class="flex flex-col">
+      <div class="border-3">
+        <VideoScreen :peers="peers" />
       </div>
       <div v-if="isInterviewer" class="flex flex-col">
         <CandidateList
@@ -16,35 +15,56 @@
         />
         <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
+      <MediaControllerBar
+        @media-state-change="handleMediaStateChange"
+        @leave-call="disconnectionCleanup"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCandidateStore } from '~~/stores/useCandidateStore';
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { usePeerStore } from '~~/stores/usePeerStore';
 
 const { $msManager } = useNuxtApp();
 const { connected, disconnectSocket } = useSocketConnection();
 
 const interviewManager = useInterviewManager();
+const signalingManager = useSignaling();
 const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
+const handshakePayload = useHandshakePayload();
 
 const route = useRoute();
-const isInterviewer = computed(() => route?.query.interviewer === 'true');
 const interviewFinished = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
+const isInterviewer = computed(() => {
+  handshakePayload.isInterviewer = route?.query.interviewer as string;
+  return route?.query.interviewer === 'true';
+});
+
+provide('isInterviewer', isInterviewer);
+
 const localMedia = useLocalMedia();
+provide('localVideoTrack', localMedia.videoTrack);
+provide('localDisplayTrack', localMedia.displayTrack);
 
 const joinInterviewRoom = async () => {
-  await localMedia.getMedia();
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await $msManager.createProducer(localMedia.videoTrack.value);
-  await $msManager.createProducer(localMedia.audioTrack.value);
+  await localMedia.getMedia('both');
+  await $msManager.createProducer(
+    localMedia.audioTrack.value as MediaStreamTrack,
+    'audio',
+  );
+  await $msManager.createProducer(
+    localMedia.videoTrack.value as MediaStreamTrack,
+    'video',
+  );
 
   await interviewManager.loadPeersInfo();
   await loadPeersConsumers();
@@ -63,8 +83,6 @@ async function loadPeersConsumers() {
   const consumers = await $msManager.getPeersMSConsumers();
   consumers.forEach((consumer) => peerStore.addPeerConsumer(consumer));
 }
-
-const hasRemotePeer = computed(() => peerStore.peers.size !== 0);
 
 whenever(
   connected,
@@ -90,8 +108,53 @@ function attachInterviewEventListener() {
 }
 
 function disconnectionCleanup() {
-  localMedia.stopMedia();
+  localMedia.stopMedia('both');
   disconnectSocket();
   peerStore.destroyPeers();
+  $msManager.closeTransports();
 }
+
+const peers = computed(() => {
+  const peers = [];
+  for (const [, peer] of peerStore.peers) {
+    peers.push(peer);
+  }
+  return peers;
+});
+
+const handleMediaStateChange = async (
+  mediaType: 'video' | 'audio' | 'display',
+  state: 'on' | 'off',
+) => {
+  if (state === 'on') {
+    await localMedia.getMedia(mediaType);
+  } else {
+    localMedia.stopMedia(mediaType);
+  }
+
+  if (mediaType === 'display') {
+    if (state === 'off') {
+      const displayProducerId = $msManager.displayProducer!.id;
+      $msManager.displayProducer!.close();
+      signalingManager.signalStopSharing(displayProducerId);
+      return;
+    }
+    await $msManager.createProducer(
+      localMedia.displayTrack.value as MediaStreamTrack,
+      mediaType,
+    );
+    return;
+  }
+
+  const track =
+    mediaType === 'video'
+      ? localMedia.videoTrack.value
+      : localMedia.audioTrack.value;
+
+  const producerId = await $msManager.toggleMediaProducer(mediaType, track);
+
+  if (!producerId) return;
+
+  signalingManager.signalMediaStateChanged(producerId, state);
+};
 </script>

@@ -94,7 +94,9 @@ export class Queue<T> {
   }
 
   removeBy(propertyName: string, value: any) {
-    const index = this.content.findIndex((e) => e[propertyName] === value);
+    const index = this.content.findIndex(
+      (e) => e[propertyName as keyof T] === value,
+    );
     if (index >= 0) {
       this.content.splice(index, 1);
       return true;
@@ -119,7 +121,7 @@ export class Queue<T> {
   }
 }
 
-export const extrackHandshakeData = (handshakeData) => {
+export const extrackHandshakeData = (handshakeData: any) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { EIO, transport, sid, j, t, ...necessaryProperties } = handshakeData;
   return necessaryProperties;

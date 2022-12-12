@@ -113,8 +113,8 @@ export class LiveGateway
   // ---------- mediasoup endpoints --------------
   @SubscribeMessage(GatewayEvents.SETUP_TRANSPORT)
   async setupTransport(
-    @MessageBody() body: { setUpMode: string },
-    @ConnectedSocket() client,
+    @MessageBody() body: { setUpMode: 'send' | 'recv' | 'both' },
+    @ConnectedSocket() client: Socket,
   ) {
     const { setUpMode } = body;
     const setUpParams = await this.msService.setupTransport(setUpMode, client);
@@ -122,18 +122,26 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.CONNECT_TRANSPORT)
-  async connectTransport(@MessageBody() body): Promise<boolean> {
+  async connectTransport(@MessageBody() body: any): Promise<boolean> {
     const { dtlsParameters, transportId } = body;
     return this.msService.connectTransport(dtlsParameters, transportId);
   }
 
   @SubscribeMessage(GatewayEvents.PRODUCE)
   async produce(
-    @MessageBody() body,
+    @MessageBody() body: any,
     @ConnectedSocket() client: Socket,
   ): Promise<string | null> {
-    const { transportId, ...params } = body;
-    const producerId = await this.msService.produce(params, transportId);
+    const { transportId, type, ...params } = body;
+    const producerId = await this.msService.produce(params, transportId, type);
+
+    if (type === 'display') {
+      this.socketService.toInterviewRoomExceptSender(
+        client,
+        'presenter-starts',
+        { producerId, producerClientId: client.id },
+      );
+    }
 
     this.socketService.toInterviewRoomExceptSender(
       client,
@@ -152,7 +160,7 @@ export class LiveGateway
 
   @SubscribeMessage(GatewayEvents.JOIN_INTERVIEW_ROOM)
   async transportConsume(
-    @MessageBody() body,
+    @MessageBody() body: any,
     @ConnectedSocket() client: Socket,
   ) {
     const { rtpCapabilities, transportId } = body;
@@ -160,7 +168,10 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.GET_NEW_PRODUCER)
-  async getNewProducer(@MessageBody() body, @ConnectedSocket() client: Socket) {
+  async getNewProducer(
+    @MessageBody() body: any,
+    @ConnectedSocket() client: Socket,
+  ) {
     const { producerId, rtpCapabilities, transportId } = body;
     return this.msService.getNewProducer(
       producerId,
@@ -170,8 +181,42 @@ export class LiveGateway
     );
   }
 
+  @SubscribeMessage(GatewayEvents.MEDIA_STATE_CHANGED)
+  async toggleMediaProducer(
+    @MessageBody() body: { producerId: string; state: 'on' | 'off' },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { producerId, state } = body;
+
+    await this.msService.toggleProducer(producerId, state, client);
+
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      CommunicationEvents.PEER_PRODUCER_STATE_CHANGED,
+      {
+        peerId: client.id,
+        producerId,
+        state,
+      },
+    );
+  }
+
+  @SubscribeMessage('stop-sharing')
+  async stopSharing(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() displayProducerId: string,
+  ) {
+    this.msService.closeProducerById(displayProducerId);
+
+    this.socketService.toInterviewRoomExceptSender(
+      client,
+      'presenter-stops',
+      client.id,
+    );
+  }
+
   @SubscribeMessage(GatewayEvents.RESUME_CONSUMER)
-  async resumeConsumer(@MessageBody() body): Promise<boolean> {
+  async resumeConsumer(@MessageBody() body: any): Promise<boolean> {
     const { consumerId } = body;
     return this.msService.resumeConsumer(consumerId);
   }

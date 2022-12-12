@@ -10,11 +10,13 @@ export interface ICreateConsumer {
 
 export interface IPeerInfo {
   username: string;
+  isInterviewer: string;
 }
 
 export interface IPeer {
-  peerInfo?: IPeerInfo;
-  consumers?: Consumer[];
+  peerInfo: IPeerInfo;
+  consumers: Consumer[];
+  displayConsumer: Consumer | null;
 }
 
 export interface candidateStats {

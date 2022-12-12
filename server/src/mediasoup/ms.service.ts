@@ -13,6 +13,7 @@ import { Consumer } from 'mediasoup/node/lib/Consumer';
 import { setUpObservers } from 'src/utils/utils';
 import { extractTransportData } from 'src/utils/utils';
 import { Socket } from 'socket.io';
+import { Transport } from 'mediasoup/node/lib/Transport';
 
 @Injectable()
 export class MsService {
@@ -33,7 +34,7 @@ export class MsService {
     });
   }
 
-  async setupTransport(setUpMode, socket: Socket) {
+  async setupTransport(setUpMode: 'send' | 'recv' | 'both', socket: Socket) {
     const transports = {
       sendTransport:
         setUpMode === 'send' || setUpMode === 'both'
@@ -52,7 +53,7 @@ export class MsService {
     };
   }
 
-  async createTransport(type, uid) {
+  async createTransport(type: 'send' | 'recv', uid: string) {
     const transport = await this.router.createWebRtcTransport({
       listenIps,
       appData: {
@@ -84,23 +85,24 @@ export class MsService {
     return true;
   }
 
-  async produce(params, transportId) {
+  async produce(params: any, transportId: string, type: string) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
 
     if (!transport) return null;
 
-    const producer = await this.createProducer(params, transport);
+    const producer = await this.createProducer(params, transport, type);
     return producer.id;
   }
 
-  async createProducer(params, transport) {
+  async createProducer(params: any, transport: Transport, type: string) {
     const producer: Producer = await transport.produce({
       kind: params.kind,
       rtpParameters: params.rtpParameters,
       appData: {
         uid: transport.appData.uid,
+        type,
       },
     });
 
@@ -127,14 +129,14 @@ export class MsService {
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
 
-    const producers = [];
+    const producers: Producer[] = [];
     (this.router.appData.producers as Map<string, Producer>).forEach(
       (producer) => {
         if (producer.appData.uid !== client.id) producers.push(producer);
       },
     );
 
-    const consumers = [];
+    const consumers: Promise<any>[] = [];
     producers.forEach(async (producer) => {
       const canConsume = this.router.canConsume({
         producerId: producer.id,
@@ -169,7 +171,7 @@ export class MsService {
   async createConsumer(
     producerId: string,
     transport: WebRtcTransport,
-    rtpCapabilities,
+    rtpCapabilities: any,
     client: Socket,
   ) {
     const producer = (
@@ -183,6 +185,7 @@ export class MsService {
       appData: {
         producerClientId: producer.appData.uid,
         uid: client.id,
+        type: producer.appData.type,
       },
     });
 
@@ -201,9 +204,9 @@ export class MsService {
   }
 
   async getNewProducer(
-    producerId,
-    transportId,
-    rtpCapabilities,
+    producerId: string,
+    transportId: string,
+    rtpCapabilities: any,
     client: Socket,
   ) {
     const transport = (
@@ -228,6 +231,24 @@ export class MsService {
     };
   }
 
+  async toggleProducer(
+    producerId: string,
+    state: 'on' | 'off',
+    client: Socket,
+  ) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
+
+    if (producer?.appData.uid !== client.id) return;
+
+    if (state === 'on') {
+      await producer.resume();
+    } else {
+      await producer.pause();
+    }
+  }
+
   async resumeConsumer(consumerId: string) {
     const consumer = (
       this.router.appData.consumers as Map<string, Consumer>
@@ -239,6 +260,14 @@ export class MsService {
       return false;
     }
     return true;
+  }
+
+  closeProducerById(producerId: string) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
+
+    producer?.close();
   }
 
   closeUserTransports(clientId: string) {
