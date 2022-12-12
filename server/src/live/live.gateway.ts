@@ -112,13 +112,35 @@ export class LiveGateway
 
   @SubscribeMessage('stop-session')
   async stopSession(@ConnectedSocket() client: Socket) {
-    console.log('session stopped');
     this.socketService.toInterviewRoomExceptSender(client, 'session-ended');
 
     const candidatesInList = this.waitingListService.getWaitingList();
     candidatesInList.forEach((candidate) =>
       this.socketService.send(candidate.id, 'session-ended'),
     );
+  }
+
+  @SubscribeMessage('start-timer')
+  async startTimer(
+    @MessageBody() body: { timerDuration: number; roomId: string },
+  ) {
+    const { timerDuration, roomId } = body;
+    const timerInMilisec = timerDuration * 1000;
+    setTimeout(() => {
+      console.log('timer finished');
+      const nextCandidate = this.waitingListService.getNextCandidate();
+
+      this.liveService.removeCurrentCandidate();
+
+      nextCandidate
+        ? this.liveService.announceMovingToNextCandidate(nextCandidate, roomId)
+        : this.socketService.send(
+            interviewerGroup,
+            CommunicationEvents.NO_CANDIDATE,
+          );
+    }, timerInMilisec);
+
+    this.socketService.send(interviewerGroup, 'timer-started', timerDuration);
   }
 
   // ---------- mediasoup endpoints --------------

@@ -22,9 +22,14 @@ export function useSignaling() {
     socketStore.socket!.emit('stop-session');
   };
 
+  const signalStartTimer = (timerDuration: number, roomId: string) => {
+    socketStore.socket!.emit('start-timer', { timerDuration, roomId });
+  };
+
   return {
     signalMediaStateChanged,
     signalStopSharing,
     signalStopSession,
+    signalStartTimer,
   };
 }

@@ -1,29 +1,37 @@
 <template>
   <div class="flex justify-center mt-10px gap-30px">
-    <Icon
-      class="cursor-pointer"
-      :name="mic[deviceState.audio]"
-      size="45px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.AUDIO)"
-    />
-    <Icon
-      class="cursor-pointer"
-      :name="cam[deviceState.video]"
-      size="45px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.VIDEO)"
-    />
-    <Icon
-      class="cursor-pointer"
-      :name="screen[deviceState.display]"
-      size="45px"
-      @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
-    />
-    <Icon
-      class="cursor-pointer"
-      name="material-symbols:call-end-outline"
-      size="45px"
-      @click="handleLeaveCall"
-    />
+    <div class="p-2 border-3 rounded-full">
+      <Icon
+        class="cursor-pointer"
+        :name="mic[deviceState.audio]"
+        size="45px"
+        @click="toggleState(MEDIA_DEVICE_TYPE.AUDIO)"
+      />
+    </div>
+    <div class="p-2 border-3 rounded-full">
+      <Icon
+        class="cursor-pointer"
+        :name="cam[deviceState.video]"
+        size="45px"
+        @click="toggleState(MEDIA_DEVICE_TYPE.VIDEO)"
+      />
+    </div>
+    <div class="p-2 border-3 rounded-full">
+      <Icon
+        class="cursor-pointer"
+        :name="screen[deviceState.display]"
+        size="45px"
+        @click="toggleState(MEDIA_DEVICE_TYPE.DISPLAY)"
+      />
+    </div>
+    <div class="p-2 border-3 rounded-full">
+      <Icon
+        class="cursor-pointer"
+        name="material-symbols:call-end-outline"
+        size="45px"
+        @click="handleLeaveCall"
+      />
+    </div>
   </div>
 </template>
 
