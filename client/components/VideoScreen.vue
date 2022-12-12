@@ -2,17 +2,17 @@
   <div ref="screen" class="w-full h-35rem flex-col">
     <InterviewerVideoGrid
       :interviewers="interviewers"
-      :interviewer-style="interviewerStyle"
+      :interviewer-style="smallDisplay"
     >
-      <LocalVideo v-if="isInterviewer" :style="interviewerStyle" />
+      <LocalVideo v-if="isInterviewer" :style="smallDisplay" />
     </InterviewerVideoGrid>
 
-    <CandidateVideo :candidate="candidate" :candidate-style="candidateStyle">
-      <LocalVideo
-        v-if="!isInterviewer"
-        :style="candidateStyle"
-        class="m-auto"
-      />
+    <CandidateVideo
+      v-if="candidate || !isInterviewer"
+      :candidate="candidate"
+      :candidate-style="largeDisplay"
+    >
+      <LocalVideo v-if="!isInterviewer" :style="largeDisplay" />
     </CandidateVideo>
   </div>
 </template>
@@ -20,7 +20,9 @@
 <script setup lang="ts">
 import { IPeer } from '~~/constants/types';
 import { calcViewlayout, extractItemStyle } from '~~/utils/utils';
-const props = defineProps<{ peers: IPeer[] }>();
+const props = defineProps<{
+  peers: IPeer[];
+}>();
 
 // isInterviewer: Ref<boolean>
 const isInterviewer = inject('isInterviewer');
@@ -33,8 +35,8 @@ const candidate = computed(() =>
   props.peers.find((peer) => peer.peerInfo.isInterviewer === 'false'),
 );
 
-const interviewerStyle = ref({ visibility: 'hidden' });
-const candidateStyle = ref({ visibility: 'hidden' });
+const smallDisplay = ref({ visibility: 'hidden' });
+const largeDisplay = ref({ visibility: 'hidden' });
 const screen = ref<HTMLElement | null>(null);
 const resizeObserver = ref<ResizeObserver | null>(null);
 
@@ -62,10 +64,10 @@ function render() {
   const items = calcViewlayout(width, height, numItems);
 
   if (items.length === 1) {
-    interviewerStyle.value = candidateStyle.value = extractItemStyle(items[0]);
+    smallDisplay.value = largeDisplay.value = extractItemStyle(items[0]);
     return;
   }
-  interviewerStyle.value = extractItemStyle(items[1]);
-  candidateStyle.value = extractItemStyle(items[0]);
+  smallDisplay.value = extractItemStyle(items[1]);
+  largeDisplay.value = extractItemStyle(items[0]);
 }
 </script>

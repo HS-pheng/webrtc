@@ -7,6 +7,7 @@
       :tracks="extractTracks(peer.consumers)"
       :peer-info="peer.peerInfo"
       :style="interviewerStyle"
+      :display-track="peer.displayConsumer?.track"
     />
   </div>
 </template>

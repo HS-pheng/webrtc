@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { useCandidateStore } from '~~/stores/useCandidateStore';
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { usePeerStore } from '~~/stores/usePeerStore';
 
 const { $msManager } = useNuxtApp();
@@ -34,39 +35,39 @@ const interviewManager = useInterviewManager();
 const signalingManager = useSignaling();
 const candidateStore = useCandidateStore();
 const peerStore = usePeerStore();
+const handshakePayload = useHandshakePayload();
 
 const route = useRoute();
 const interviewFinished = ref(false);
 const interviewEventListener = useEventBus('interviewEvents');
 attachInterviewEventListener();
 
-const isInterviewer = computed(() => route?.query.interviewer === 'true');
+const isInterviewer = computed(() => {
+  handshakePayload.isInterviewer = route?.query.interviewer as string;
+  return route?.query.interviewer === 'true';
+});
+
 provide('isInterviewer', isInterviewer);
 
 const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
+provide('localDisplayTrack', localMedia.displayTrack);
 
 const joinInterviewRoom = async () => {
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
-  await produceMedia('audio');
-  await produceMedia('video');
+  await localMedia.getMedia('both');
+  await $msManager.createProducer(
+    localMedia.audioTrack.value as MediaStreamTrack,
+    'audio',
+  );
+  await $msManager.createProducer(
+    localMedia.videoTrack.value as MediaStreamTrack,
+    'video',
+  );
 
   await interviewManager.loadPeersInfo();
   await loadPeersConsumers();
-};
-
-const produceMedia = async (type: 'audio' | 'video') => {
-  await localMedia.getMedia(type);
-  if (type === 'video') {
-    await $msManager.createProducer(
-      localMedia.videoTrack.value as MediaStreamTrack,
-    );
-  } else {
-    await $msManager.createProducer(
-      localMedia.audioTrack.value as MediaStreamTrack,
-    );
-  }
 };
 
 const renderCandidateList = async () => {
@@ -122,7 +123,7 @@ const peers = computed(() => {
 });
 
 const handleMediaStateChange = async (
-  mediaType: 'video' | 'audio',
+  mediaType: 'video' | 'audio' | 'display',
   state: 'on' | 'off',
 ) => {
   if (state === 'on') {
@@ -131,12 +132,28 @@ const handleMediaStateChange = async (
     localMedia.stopMedia(mediaType);
   }
 
+  if (mediaType === 'display') {
+    if (state === 'off') {
+      const displayProducerId = $msManager.displayProducer!.id;
+      $msManager.displayProducer!.close();
+      signalingManager.signalStopSharing(displayProducerId);
+      return;
+    }
+    await $msManager.createProducer(
+      localMedia.displayTrack.value as MediaStreamTrack,
+      mediaType,
+    );
+    return;
+  }
+
   const track =
     mediaType === 'video'
       ? localMedia.videoTrack.value
       : localMedia.audioTrack.value;
 
   const producerId = await $msManager.toggleMediaProducer(mediaType, track);
+
+  if (!producerId) return;
 
   signalingManager.signalMediaStateChanged(producerId, state);
 };

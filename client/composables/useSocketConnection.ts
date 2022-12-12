@@ -101,6 +101,18 @@ export function useSocketConnection() {
         peerStore.addPeerInfo(peer.info, peer.id);
       },
     );
+
+    socket.value!.on(
+      'presenter-starts',
+      async ({ producerId, producerClientId }) => {
+        const consumer = await $msManager.handleNewPeerProducer(producerId);
+        peerStore.addPeerDisplay(producerClientId, consumer);
+      },
+    );
+
+    socket.value!.on('presenter-stops', (presenterId) => {
+      peerStore.removePeerDisplay(presenterId);
+    });
   }
 
   function subscribeMediaSoupListener() {
@@ -110,6 +122,7 @@ export function useSocketConnection() {
     });
 
     socket.value!.on(MsEvents.PRODUCER_CLOSED, (producerClientId) => {
+      peerStore.removePeerDisplay(producerClientId);
       peerStore.removePeer(producerClientId);
     });
 
@@ -123,7 +136,7 @@ export function useSocketConnection() {
 
   function disconnectSocket() {
     socketStore.connected = false;
-    socket.value!.disconnect();
+    socket.value?.disconnect();
   }
 
   return { socket, disconnectSocket, connected };

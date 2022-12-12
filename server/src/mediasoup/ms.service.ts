@@ -85,23 +85,24 @@ export class MsService {
     return true;
   }
 
-  async produce(params: any, transportId: string) {
+  async produce(params: any, transportId: string, type: string) {
     const transport = (
       this.router.appData.transports as Map<string, WebRtcTransport>
     ).get(transportId);
 
     if (!transport) return null;
 
-    const producer = await this.createProducer(params, transport);
+    const producer = await this.createProducer(params, transport, type);
     return producer.id;
   }
 
-  async createProducer(params: any, transport: Transport) {
+  async createProducer(params: any, transport: Transport, type: string) {
     const producer: Producer = await transport.produce({
       kind: params.kind,
       rtpParameters: params.rtpParameters,
       appData: {
         uid: transport.appData.uid,
+        type,
       },
     });
 
@@ -184,6 +185,7 @@ export class MsService {
       appData: {
         producerClientId: producer.appData.uid,
         uid: client.id,
+        type: producer.appData.type,
       },
     });
 
@@ -258,6 +260,14 @@ export class MsService {
       return false;
     }
     return true;
+  }
+
+  closeProducerById(producerId: string) {
+    const producer = (
+      this.router.appData.producers as Map<string, Producer>
+    ).get(producerId);
+
+    producer?.close();
   }
 
   closeUserTransports(clientId: string) {

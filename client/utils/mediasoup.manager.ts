@@ -14,6 +14,7 @@ export class MsManager {
 
   videoProducer: Producer | null = null;
   audioProducer: Producer | null = null;
+  displayProducer: Producer | null = null;
 
   constructor() {
     try {
@@ -70,6 +71,7 @@ export class MsManager {
               kind,
               rtpParameters,
               transportId: targetTransport!.id,
+              type: appData.type,
               appData,
             });
 
@@ -111,11 +113,16 @@ export class MsManager {
     return this.createPeerConsumers(peerProducers);
   }
 
-  async createProducer(track: MediaStreamTrack) {
-    const produceData = { track };
+  async createProducer(track: MediaStreamTrack, type: string) {
+    const produceData = { track, appData: { type } };
 
-    if (track.kind === 'audio') {
+    if (type === 'audio') {
       this.audioProducer = await this.sendTransport!.produce(produceData);
+      return;
+    }
+
+    if (type === 'display') {
+      this.displayProducer = await this.sendTransport!.produce(produceData);
       return;
     }
 
@@ -129,17 +136,23 @@ export class MsManager {
   }
 
   async toggleMediaProducer(
-    mediaType: 'audio' | 'video',
+    mediaType: 'audio' | 'video' | 'display',
     track: MediaStreamTrack | null,
   ) {
     const producer =
-      mediaType === 'video' ? this.videoProducer : this.audioProducer;
+      mediaType === 'video'
+        ? this.videoProducer
+        : mediaType === 'display'
+        ? this.displayProducer
+        : this.audioProducer;
 
-    if (producer!.paused) {
-      await producer!.replaceTrack({ track });
-      producer!.resume();
+    if (!producer) return;
+
+    if (producer.paused) {
+      await producer.replaceTrack({ track });
+      producer.resume();
     } else {
-      producer!.pause();
+      producer.pause();
     }
 
     return producer!.id;

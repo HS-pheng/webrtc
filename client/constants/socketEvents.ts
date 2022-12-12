@@ -16,6 +16,8 @@ export const CommunicationEvents = {
   CANDIDATE_STATISTIC: 'candidate-statistic',
   INTERVIEW_FINISHED: 'interview-finished',
   NEW_PEER_INFO: 'new-peer-info',
+  MEDIA_STATE_CHANGED: 'media-state-changed',
+  STOP_SHARING: 'stop-sharing',
 } as const;
 
 export const BusEvents = {

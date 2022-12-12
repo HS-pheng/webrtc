@@ -18,9 +18,9 @@
 <script setup lang="ts">
 import { useHandshakePayload } from '@@/stores/useHandshakePayload';
 const handshakePayload = useHandshakePayload();
+const { disconnectSocket } = useSocketConnection();
 
 const joinAsInterviewer: any = () => {
-  handshakePayload.isInterviewer = 'true';
   return navigateTo({
     path: '/room/interview',
     query: {
@@ -37,4 +37,9 @@ const joinAsCandidate: any = () => {
 const onNameChange = (event: any) => {
   handshakePayload.username = event.target.value;
 };
+
+onMounted(() => {
+  handshakePayload.username = 'Anonymous';
+  disconnectSocket();
+});
 </script>

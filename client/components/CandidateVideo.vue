@@ -1,13 +1,17 @@
 <template>
   <div>
-    <slot />
-    <Peer
-      v-if="candidate"
-      :tracks="extractTracks(candidate.consumers)"
-      :peer-info="candidate?.peerInfo"
-      :style="candidateStyle"
-      class="m-auto"
-    />
+    <div ref="container" :style="candidateStyle" class="m-auto relative">
+      <div class="absolute bottom-0">
+        <slot />
+        <Peer
+          v-if="candidate"
+          :tracks="extractTracks(candidate.consumers)"
+          :peer-info="candidate?.peerInfo"
+          :style="candidateStyle"
+          :display-track="candidate.displayConsumer?.track"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -15,7 +19,8 @@
 import { IPeer } from '~~/constants/types';
 import { extractTracks } from '~~/utils/utils';
 
-defineProps<{
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const props = defineProps<{
   candidate: IPeer | undefined;
   candidateStyle: any;
 }>();
