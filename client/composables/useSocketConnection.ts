@@ -74,9 +74,9 @@ export function useSocketConnection() {
   }
 
   function subscribeCandidateEventListener() {
-    socket.value!.on(CommunicationEvents.READY_FOR_INTERVIEW, () => {
+    socket.value!.on(CommunicationEvents.READY_FOR_INTERVIEW, (roomId) => {
       return navigateTo({
-        path: '/room/interview',
+        path: `/room/interview/${roomId}`,
         query: {
           interviewer: 'false',
         },
@@ -112,6 +112,15 @@ export function useSocketConnection() {
 
     socket.value!.on('presenter-stops', (presenterId) => {
       peerStore.removePeerDisplay(presenterId);
+    });
+
+    socket.value!.on('session-ended', () => {
+      const interviewEventBroadcaster = useEventBus(BusEvents.INTERVIEW_EVENTS);
+      interviewEventBroadcaster.emit(BusEvents.INTERVIEW_FINISHED);
+      disconnectSocket();
+      peerStore.destroyPeers();
+      $msManager.closeTransports();
+      return navigateTo('/');
     });
   }
 

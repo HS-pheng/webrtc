@@ -1,5 +1,5 @@
 <template>
-  <div ref="screen" class="w-full h-35rem flex-col">
+  <div ref="screen" class="w-full h-35rem flex-col bg-black">
     <InterviewerVideoGrid
       :interviewers="interviewers"
       :interviewer-style="smallDisplay"

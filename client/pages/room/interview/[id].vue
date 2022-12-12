@@ -1,19 +1,28 @@
 <template>
   <div>
+    <CommonCardHeader :title="listing?.title" class="mb-4">
+      <CommonButton @click="$router.push(`/listings/${$route.params.id}`)">
+        Back
+      </CommonButton>
+    </CommonCardHeader>
+    <div v-if="isInterviewer" class="flex mb-3">
+      <CommonButton @click="stopSession"> Stop Session </CommonButton>
+      <CommonButton @click="requestNextCandidate">
+        Next Participant
+      </CommonButton>
+      <CandidateList
+        class="ml-auto"
+        :current-candidate="candidateStore.currentCandidate"
+        :candidate-list="candidateStore.candidateList"
+      />
+    </div>
     <div v-if="interviewFinished">
       <p>Your interview is finished</p>
       <CommonButton @click.once="navigateTo('/')">Home</CommonButton>
     </div>
     <div v-else class="flex flex-col">
-      <div class="border-3">
+      <div class="">
         <VideoScreen :peers="peers" />
-      </div>
-      <div v-if="isInterviewer" class="flex flex-col">
-        <CandidateList
-          :current-candidate="candidateStore.currentCandidate"
-          :candidate-list="candidateStore.candidateList"
-        />
-        <CommonButton @click="requestNextCandidate"> Next </CommonButton>
       </div>
       <MediaControllerBar
         @media-state-change="handleMediaStateChange"
@@ -24,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { ListingInfo } from '~~/constants/types';
 import { useCandidateStore } from '~~/stores/useCandidateStore';
 import { useHandshakePayload } from '~~/stores/useHandshakePayload';
 import { usePeerStore } from '~~/stores/usePeerStore';
@@ -53,6 +63,14 @@ const localMedia = useLocalMedia();
 provide('localVideoTrack', localMedia.videoTrack);
 provide('localDisplayTrack', localMedia.displayTrack);
 
+const listing = ref<ListingInfo | null>(null);
+
+onMounted(async () => {
+  listing.value = await $fetch<any>(
+    `http://localhost:3001/listings/${route.params.id}`,
+  );
+});
+
 const joinInterviewRoom = async () => {
   const setUpMode = 'both';
   await $msManager.init(setUpMode);
@@ -76,7 +94,8 @@ const renderCandidateList = async () => {
 };
 
 const requestNextCandidate = () => {
-  if (connected.value) interviewManager.requestNextCandidate();
+  const roomId = route.params.id as string;
+  if (connected.value) interviewManager.requestNextCandidate(roomId);
 };
 
 async function loadPeersConsumers() {
@@ -109,6 +128,7 @@ function attachInterviewEventListener() {
 
 function disconnectionCleanup() {
   localMedia.stopMedia('both');
+  localMedia.stopMedia('display');
   disconnectSocket();
   peerStore.destroyPeers();
   $msManager.closeTransports();
@@ -157,4 +177,10 @@ const handleMediaStateChange = async (
 
   signalingManager.signalMediaStateChanged(producerId, state);
 };
+
+function stopSession() {
+  signalingManager.signalStopSession();
+  disconnectionCleanup();
+  return navigateTo('/');
+}
 </script>

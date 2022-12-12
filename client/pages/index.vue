@@ -1,45 +1,43 @@
 <template>
-  <div class="flex flex-col gap-4 m-4">
-    <div class="flex gap-3">
-      <label>Name</label>
-      <input class="border-2" @change="onNameChange" />
-    </div>
-    <div class="flex gap-4">
-      <button class="p-2 border-2 w-50" @click="joinAsInterviewer">
-        Join Room as an Interviewer
-      </button>
-      <button class="p-2 border-2 w-50" @click="joinAsCandidate">
-        Join Room as a Candidate
-      </button>
-    </div>
+  <div>
+    <ListingsList :items="listings" @create="showCreateDialog = true" />
+    <CommonModal
+      v-model="showCreateDialog"
+      title="Create New Listing"
+      confirm-text="Create"
+      @submit="onCreate"
+    >
+      <CommonInputGroup v-model="newListing.title" name="Title" type="text" />
+      <CommonInputGroup
+        v-model="newListing.description"
+        name="Description"
+        type="text"
+      />
+    </CommonModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useHandshakePayload } from '@@/stores/useHandshakePayload';
-const handshakePayload = useHandshakePayload();
-const { disconnectSocket } = useSocketConnection();
+import { ListingInfo } from '~~/constants/types';
 
-const joinAsInterviewer: any = () => {
-  return navigateTo({
-    path: '/room/interview',
-    query: {
-      interviewer: 'true',
-    },
+const listings = ref<ListingInfo[]>([]);
+const showCreateDialog = ref(false);
+
+const newListing = ref({
+  title: '',
+  description: '',
+});
+
+async function onCreate() {
+  const data = await $fetch<ListingInfo>('http://localhost:3001/listings', {
+    body: newListing.value,
+    method: 'post',
   });
-};
+  listings.value.push(data);
+}
 
-const joinAsCandidate: any = () => {
-  handshakePayload.isInterviewer = 'false';
-  return navigateTo('/room/wait');
-};
-
-const onNameChange = (event: any) => {
-  handshakePayload.username = event.target.value;
-};
-
-onMounted(() => {
-  handshakePayload.username = 'Anonymous';
-  disconnectSocket();
+onMounted(async () => {
+  const data = await $fetch<ListingInfo[]>('http://localhost:3001/listings');
+  listings.value = data;
 });
 </script>

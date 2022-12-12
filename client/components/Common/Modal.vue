@@ -55,7 +55,10 @@
                   <slot />
                 </div>
               </div>
-              <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <div
+                v-if="confirmText"
+                class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse"
+              >
                 <CommonButton @click="submit">
                   {{ confirmText }}
                 </CommonButton>
@@ -81,7 +84,7 @@ import {
 defineProps<{
   modelValue: boolean;
   title: string;
-  confirmText: string;
+  confirmText?: string;
 }>();
 
 const emit = defineEmits(['update:modelValue', 'submit']);

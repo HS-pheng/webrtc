@@ -71,13 +71,13 @@ export class LiveGateway
   }
 
   @SubscribeMessage(GatewayEvents.NEXT_CANDIDATE)
-  async handleNextCandidateRequest() {
+  async handleNextCandidateRequest(@MessageBody() roomId: string) {
     const nextCandidate = this.waitingListService.getNextCandidate();
 
     this.liveService.removeCurrentCandidate();
 
     nextCandidate
-      ? this.liveService.announceMovingToNextCandidate(nextCandidate)
+      ? this.liveService.announceMovingToNextCandidate(nextCandidate, roomId)
       : this.socketService.send(
           interviewerGroup,
           CommunicationEvents.NO_CANDIDATE,
@@ -108,6 +108,17 @@ export class LiveGateway
   @SubscribeMessage(GatewayEvents.GET_PEERS_INFO)
   async getPeersInfo(@ConnectedSocket() client: Socket) {
     return this.socketService.getPeersInfoExcept(client);
+  }
+
+  @SubscribeMessage('stop-session')
+  async stopSession(@ConnectedSocket() client: Socket) {
+    console.log('session stopped');
+    this.socketService.toInterviewRoomExceptSender(client, 'session-ended');
+
+    const candidatesInList = this.waitingListService.getWaitingList();
+    candidatesInList.forEach((candidate) =>
+      this.socketService.send(candidate.id, 'session-ended'),
+    );
   }
 
   // ---------- mediasoup endpoints --------------

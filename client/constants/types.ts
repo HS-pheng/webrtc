@@ -28,3 +28,9 @@ export interface candidateInfo {
   id: string;
   username: string;
 }
+
+export interface ListingInfo {
+  id: string;
+  title: string;
+  description: string;
+}

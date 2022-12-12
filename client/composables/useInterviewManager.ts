@@ -7,8 +7,8 @@ export function useInterviewManager() {
   const socketStore = useWebsocket();
   const peerStore = usePeerStore();
 
-  const requestNextCandidate = () => {
-    socketStore.socket!.emit(InterviewRequests.NEXT_CANDIDATE, {});
+  const requestNextCandidate = (roomId: string) => {
+    socketStore.socket!.emit(InterviewRequests.NEXT_CANDIDATE, roomId);
   };
 
   const getCandidateList = (): Promise<candidateInfo[]> => {
@@ -29,9 +29,6 @@ export function useInterviewManager() {
   const loadPeersInfo = async () => {
     const peersInfo: { [peerId: string]: IPeerInfo } =
       await socketStore.socket!.request(InterviewRequests.GET_PEERS_INFO, {});
-
-    console.log(peersInfo);
-
     Object.entries(peersInfo).forEach(([peerId, peerInfo]) =>
       peerStore.addPeerInfo(peerInfo, peerId),
     );

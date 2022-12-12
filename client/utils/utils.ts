@@ -10,7 +10,7 @@ export const calcViewlayout = (
 ) => {
   const gaps = 10;
   const itemAspect = 16 / 9;
-  const maxSmallItems = 4;
+  const maxSmallItems = 5;
 
   if (numItems === 1) {
     let itemWidth = containerWidth - gaps * 2;

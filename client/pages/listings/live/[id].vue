@@ -1,51 +1,45 @@
 <template>
   <div>
     <div v-if="listing">
-      <CommonCardHeader :title="listing.title" class="mb-4">
+      <CommonCardHeader :title="listing?.title" class="mb-4">
         <CommonButton @click="$router.push(`/listings/${$route.params.id}`)">
           Back
         </CommonButton>
       </CommonCardHeader>
-      <CommonButton v-if="!hostMode" @click="joinWaitingList"
-        >Join Waiting List</CommonButton
-      >
-      <CommonButton v-if="!hostMode" @click="hostMode = true"
-        >Enter Host Mode</CommonButton
-      >
-      <div v-else class="flex">
-        <CommonButton>Start Session</CommonButton>
-        <CommonButton>Stop Session</CommonButton>
-        <CommonButton v-if="currentParticipant"
-          >Conclude Participant Pitch</CommonButton
-        >
-        <CommonButton v-else-if="numWaitingParticipants > 0"
-          >Next Participant</CommonButton
-        >
-        <p class="ml-auto">
-          {{ 'Currently Waiting: ' + numWaitingParticipants }}
-        </p>
-      </div>
-      <div class="flex w-full p-4">
-        <div class="flex flex-col w-1/2">
-          <video class="w-full bg-black" />
-          <p class="text-xs text-center">Local Video</p>
-        </div>
-        <div class="bg-white w-1" />
-        <div class="flex flex-col w-1/2">
-          <video v-if="currentParticipant" class="w-full bg-black" />
-          <p v-else class="text-center my-auto">Currently No Participant</p>
-          <p class="text-xs text-center">Remote Video</p>
-        </div>
-      </div>
+      <CommonInputGroup
+        v-model="name"
+        name="Name"
+        type="text"
+        class="w-200px"
+      />
+      <CommonButton @click="joinWaitingList">Join Waiting List</CommonButton>
+      <CommonButton @click="enterHostMode">Enter Host Mode</CommonButton>
     </div>
     <div v-else>Loading</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ListingInfo } from '~~/constants/types';
+import { useHandshakePayload } from '~~/stores/useHandshakePayload';
+
+const { disconnectSocket } = useSocketConnection();
+const handshakePayload = useHandshakePayload();
 const route = useRoute();
 
-const listing = ref(null);
+const listing = ref<ListingInfo | null>(null);
+const name = ref('');
+
+watch(name, handleNameChange);
+
+function handleNameChange(name: string) {
+  handshakePayload.username = name;
+}
+
+onMounted(() => {
+  handshakePayload.username = 'Anonymous';
+  disconnectSocket();
+});
 
 onMounted(async () => {
   listing.value = await $fetch<any>(
@@ -53,12 +47,17 @@ onMounted(async () => {
   );
 });
 
-// Just for simplicity reason is enabled at all times. It should obviously not be possible for anyone to enter HostMode
-const hostMode = ref(false);
-const currentParticipant = ref(false);
-const numWaitingParticipants = ref(0);
-
 function joinWaitingList() {
-  // Do some stuff
+  handshakePayload.isInterviewer = 'false';
+  return navigateTo(`/room/wait/${route.params.id}`);
+}
+
+function enterHostMode() {
+  return navigateTo({
+    path: `/room/interview/${route.params.id}`,
+    query: {
+      interviewer: 'true',
+    },
+  });
 }
 </script>
